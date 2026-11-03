@@ -9,7 +9,7 @@ import { ESPEAK_SAMPLE_RATE } from '../espeak.ts'
 import type { Language } from '../ipa.ts'
 
 export const ENGINES = {
-  waxvocoder: { label: 'WaxVocoder (formants, robot, chant)' },
+  waxvocoder: { label: 'WaxVocoder' },
   espeak: { label: 'eSpeak NG' },
   piper: { label: 'Piper (voix naturelle)' },
 } as const

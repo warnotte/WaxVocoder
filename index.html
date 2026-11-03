@@ -3,117 +3,146 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#111318" />
-    <meta name="description" content="Instrument vocal électronique expérimental." />
-    <title>Wax Vocoder — laboratoire vocal</title>
+    <meta name="theme-color" content="#d5d6d0" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#2a2c2e" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="Synthétiseur de voix et vocoder : tape une phrase, choisis une voix, fais-la parler ou chanter au robot." />
+    <title>Wax Vocoder</title>
   </head>
   <body>
-    <main class="app-shell">
-      <header class="masthead">
-        <p class="eyebrow">Instrument vocal expérimental</p>
+    <main class="instrument">
+      <header class="nameplate">
         <h1>Wax Vocoder</h1>
-        <p class="intro">Voix électronique à formants, vocoder et effets de robot, pilotés par des phonèmes.</p>
+        <p class="tagline">Tape une phrase, choisis une voix et joue-la. Le robot peut aussi la chanter.</p>
       </header>
 
-      <section class="workbench" aria-labelledby="phrase-title">
-        <div class="section-header">
-          <label id="phrase-title" class="field-title" for="phrase">Texte (anglais)</label>
-          <label class="select-control" for="language">
-            Langue
-            <select id="language"></select>
-          </label>
-          <label class="select-control" for="engine" title="WaxVocoder : voix à formants, robot, chant. eSpeak NG : sa propre voix. Piper : voix naturelle (téléchargée au premier usage, ≈ 60 Mo).">
-            Moteur
-            <select id="engine"></select>
-          </label>
-        </div>
-        <p id="engine-hint" class="hint" hidden></p>
-        <textarea id="phrase" rows="2" maxlength="240">Hello, I am a talking machine.</textarea>
-        <label class="phoneme-label" for="phonemes">Phonèmes générés — modifiables</label>
-        <textarea id="phonemes" rows="3" spellcheck="false">HH AH0 L OW1 , AY1 | AE1 M | AH0 | T AO1 K IH0 NG | M AH0 SH IY1 N .</textarea>
-        <p id="phoneme-hint" class="hint"></p>
-        <label class="checkbox" for="natural-rhythm" title="Chaque phonème garde la durée que lui donne eSpeak NG : le débit et les accents de la langue. Sans effet en anglais ou si les phonèmes sont modifiés à la main.">
-          <input id="natural-rhythm" type="checkbox" checked disabled /> Rythme naturel de la langue (eSpeak NG)
+      <div class="source">
+        <label class="select-control" for="language">
+          Langue
+          <select id="language"></select>
         </label>
-        <div class="controls">
-          <div class="sliders">
-            <label class="slider-control" for="pitch">
-              Hauteur <output id="pitch-value" for="pitch">110 Hz</output>
-              <input id="pitch" type="range" min="45" max="300" value="110" />
-            </label>
-            <label class="slider-control" for="rate">
-              Débit <output id="rate-value" for="rate">× 1.00</output>
-              <input id="rate" type="range" min="0.5" max="1.6" step="0.05" value="1" />
-            </label>
-            <label class="slider-control" for="intonation">
-              Intonation <output id="intonation-value" for="intonation">60 %</output>
-              <input id="intonation" type="range" min="0" max="1" step="0.05" value="0.6" />
-            </label>
-            <label class="slider-control" for="presence">
-              Présence <output id="presence-value" for="presence">50 %</output>
-              <input id="presence" type="range" min="0" max="1" step="0.05" value="0.5" />
-            </label>
-          </div>
-          <div class="actions">
-            <button id="export" type="button" class="secondary">Exporter WAV</button>
-            <button id="play" type="button">Lire la phrase</button>
-          </div>
+        <label class="select-control" for="engine" title="WaxVocoder : voix à formants, robot, chant. eSpeak NG : sa propre voix. Piper : voix naturelle, téléchargée au premier usage (≈ 60 Mo).">
+          Moteur
+          <select id="engine"></select>
+        </label>
+      </div>
+
+      <section class="display" aria-label="Phrase à dire">
+        <canvas id="meter" class="meter" aria-hidden="true"></canvas>
+        <label id="phrase-title" class="display-label" for="phrase">Texte (anglais)</label>
+        <textarea id="phrase" rows="2" maxlength="240">Hello, I am a talking machine.</textarea>
+        <label class="display-label" for="phonemes">Phonèmes, modifiables</label>
+        <textarea id="phonemes" rows="2" spellcheck="false">HH AH0 L OW1 , AY1 | AE1 M | AH0 | T AO1 K IH0 NG | M AH0 SH IY1 N .</textarea>
+        <p id="phoneme-hint" class="display-hint"></p>
+        <p id="engine-hint" class="display-hint" hidden></p>
+        <div class="display-foot">
+          <label class="checkbox" for="natural-rhythm" title="Chaque phonème garde la durée que lui donne eSpeak NG : le débit de la langue. Sans effet en anglais ou si les phonèmes sont modifiés à la main.">
+            <input id="natural-rhythm" type="checkbox" checked disabled /> Rythme de la langue (eSpeak NG)
+          </label>
+          <p id="status" class="status" role="status">Chargement du dictionnaire de prononciation…</p>
         </div>
-        <p id="status" class="status" role="status">Chargement du dictionnaire de prononciation…</p>
       </section>
 
-      <section class="workbench robot" aria-labelledby="robot-title">
-        <div class="section-header">
-          <h2 id="robot-title">Robot et effets</h2>
-          <label class="select-control" for="preset">
-            Préréglage
-            <select id="preset"></select>
-          </label>
-        </div>
-        <div class="sliders">
-          <label class="slider-control" for="vocoder">
-            Vocoder <output id="vocoder-value" for="vocoder">0 %</output>
-            <input id="vocoder" type="range" min="0" max="1" step="0.05" value="0" />
-          </label>
-          <label class="select-control" for="chord">
-            Porteuse
-            <select id="chord"></select>
-          </label>
-          <label class="slider-control" for="tempo">
-            Tempo robot <output id="tempo-value" for="tempo">libre</output>
-            <input id="tempo" type="range" min="0" max="200" step="2" value="0" />
-          </label>
-          <label class="slider-control" for="lofi">
-            Jouet 1980 <output id="lofi-value" for="lofi">0 %</output>
-            <input id="lofi" type="range" min="0" max="1" step="0.05" value="0" />
-          </label>
-          <label class="slider-control" for="formant-shift">
-            Taille <output id="formant-shift-value" for="formant-shift">normale</output>
-            <input id="formant-shift" type="range" min="0.6" max="1.6" step="0.02" value="1" />
-          </label>
-          <label class="slider-control" for="vibrato">
-            Vibrato <output id="vibrato-value" for="vibrato">0.0 demi-ton</output>
-            <input id="vibrato" type="range" min="0" max="3" step="0.1" value="0" />
-          </label>
-          <label class="slider-control" for="glide">
-            Glissando <output id="glide-value" for="glide">0 ms</output>
-            <input id="glide" type="range" min="0" max="0.4" step="0.01" value="0" />
-          </label>
-        </div>
-        <div class="melody-row">
-          <label class="melody-label" for="melody">Mélodie (une note par voyelle)</label>
-          <input id="melody" type="text" spellcheck="false" placeholder="ex. C3 C3 D#3 G2 ou do2 do2 ré#2 sol1" />
-          <label class="checkbox" for="quantize"><input id="quantize" type="checkbox" /> Notes justes</label>
-        </div>
-        <p id="melody-hint" class="hint"></p>
+      <div class="transport">
+        <button id="play" type="button" class="key key-play"><span class="led" aria-hidden="true"></span><span class="key-label">Lire la phrase</span></button>
+        <button id="export" type="button" class="key key-quiet">Exporter WAV</button>
+      </div>
+
+      <section class="presets" aria-labelledby="presets-title">
+        <h2 id="presets-title">Préréglages</h2>
+        <div id="presets" class="preset-keys" role="group" aria-labelledby="presets-title"></div>
       </section>
+
+      <div class="modules">
+        <section class="module" aria-labelledby="voice-title">
+          <h2 id="voice-title">Voix</h2>
+          <div class="faders">
+            <label class="fader" for="pitch">
+              <output id="pitch-value" for="pitch">110 Hz</output>
+              <input id="pitch" type="range" min="45" max="300" value="110" />
+              <span>Hauteur</span>
+            </label>
+            <label class="fader" for="rate">
+              <output id="rate-value" for="rate">× 1.00</output>
+              <input id="rate" type="range" min="0.5" max="1.6" step="0.05" value="1" />
+              <span>Débit</span>
+            </label>
+            <label class="fader" for="intonation">
+              <output id="intonation-value" for="intonation">60 %</output>
+              <input id="intonation" type="range" min="0" max="1" step="0.05" value="0.6" />
+              <span>Intonation</span>
+            </label>
+            <label class="fader" for="presence">
+              <output id="presence-value" for="presence">50 %</output>
+              <input id="presence" type="range" min="0" max="1" step="0.05" value="0.5" />
+              <span>Présence</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="module module-robot" aria-labelledby="robot-title">
+          <h2 id="robot-title">Robot</h2>
+          <div class="faders">
+            <label class="fader" for="vocoder">
+              <output id="vocoder-value" for="vocoder">0 %</output>
+              <input id="vocoder" type="range" min="0" max="1" step="0.05" value="0" />
+              <span>Vocoder</span>
+            </label>
+            <label class="fader" for="tempo">
+              <output id="tempo-value" for="tempo">libre</output>
+              <input id="tempo" type="range" min="0" max="200" step="2" value="0" />
+              <span>Tempo</span>
+            </label>
+            <label class="fader" for="lofi">
+              <output id="lofi-value" for="lofi">0 %</output>
+              <input id="lofi" type="range" min="0" max="1" step="0.05" value="0" />
+              <span>Jouet 1980</span>
+            </label>
+            <label class="fader" for="formant-shift">
+              <output id="formant-shift-value" for="formant-shift">normale</output>
+              <input id="formant-shift" type="range" min="0.6" max="1.6" step="0.02" value="1" />
+              <span>Taille</span>
+            </label>
+            <label class="fader" for="vibrato">
+              <output id="vibrato-value" for="vibrato">0.0 demi-ton</output>
+              <input id="vibrato" type="range" min="0" max="3" step="0.1" value="0" />
+              <span>Vibrato</span>
+            </label>
+            <label class="fader" for="glide">
+              <output id="glide-value" for="glide">0 ms</output>
+              <input id="glide" type="range" min="0" max="0.4" step="0.01" value="0" />
+              <span>Glissando</span>
+            </label>
+          </div>
+          <div class="robot-notes">
+            <label class="select-control" for="chord">
+              Porteuse
+              <select id="chord"></select>
+            </label>
+            <label class="melody" for="melody">
+              Mélodie, une note par voyelle
+              <input id="melody" type="text" spellcheck="false" placeholder="C3 C3 D#3 G2 ou do2 do2 ré#2 sol1" />
+            </label>
+            <label class="checkbox" for="quantize"><input id="quantize" type="checkbox" /> Notes justes</label>
+          </div>
+          <p id="melody-hint" class="hint"></p>
+        </section>
+      </div>
 
       <footer>
-        Synthèse à formants et vocoder · Rust / WebAssembly / AudioWorklet · Logiciel libre sous GPL-3.0-or-later, code source :
-        <a href="https://github.com/warnotte/WaxVocoder">github.com/warnotte/WaxVocoder</a> ·
-        Transcription : eSpeak NG (GPL-3.0, <a href="https://github.com/echogarden-project/espeak-ng-emscripten">sources</a>, <a href="assets/espeak-ng.COPYING.txt">licence</a>) ·
-        Prononciations anglaises : CMU Pronouncing Dictionary (<a href="https://github.com/warnotte/WaxVocoder/blob/main/src/data/CMUDICT_LICENSE.txt">licence de type BSD</a>) ·
-        Moteur Piper : ONNX Runtime Web (<a href="assets/onnxruntime-web.LICENSE.txt">MIT</a>), voix française « siwis » (<a href="https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR/siwis">SIWIS</a>, université d’Édimbourg, <a href="https://creativecommons.org/licenses/by/4.0/deed.fr">CC BY 4.0</a>)
+        <p>
+          Logiciel libre sous GPL-3.0-or-later, code source sur
+          <a href="https://github.com/warnotte/WaxVocoder">github.com/warnotte/WaxVocoder</a>.
+          Moteur Rust et WebAssembly, transcription par eSpeak NG (GPL-3.0,
+          <a href="https://github.com/echogarden-project/espeak-ng-emscripten">sources</a>, <a href="assets/espeak-ng.COPYING.txt">licence</a>),
+          prononciations anglaises du CMU Pronouncing Dictionary
+          (<a href="https://github.com/warnotte/WaxVocoder/blob/main/src/data/CMUDICT_LICENSE.txt">licence de type BSD</a>).
+        </p>
+        <p>
+          Moteur Piper : ONNX Runtime Web (<a href="assets/onnxruntime-web.LICENSE.txt">MIT</a>), voix française « siwis »
+          (<a href="https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR/siwis">SIWIS</a>, université d’Édimbourg,
+          <a href="https://creativecommons.org/licenses/by/4.0/deed.fr">CC BY 4.0</a>).
+          Polices Michroma et Barlow Semi Condensed (<a href="https://openfontlicense.org">SIL OFL 1.1</a>).
+        </p>
       </footer>
     </main>
     <script type="module" src="/src/main.ts"></script>

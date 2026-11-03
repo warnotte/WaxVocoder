@@ -9,6 +9,7 @@ import { loadDictionary } from './dictionary'
 import { BufferPlayer, synthesize } from './engines/browser'
 import { type EngineName, ENGINES, PIPER_VOICES, robotSettings, type Speech } from './engines/index'
 import { type EspeakTranscriber, loadEspeak } from './espeak'
+import { BandMeter } from './visualizer'
 import { ESPEAK_LANGUAGES, type Language } from './ipa'
 import { type Lexicon, transcribe, unknownPhonemeTokens } from './phonemes'
 import { applySettings, CHORDS, DEFAULT_SETTINGS, invalidNotes, PRESETS, type VoiceSettings } from './voice-settings'
@@ -24,7 +25,8 @@ const phraseTitle = element<HTMLElement>('#phrase-title')
 const phraseControl = element<HTMLTextAreaElement>('#phrase')
 const phonemeControl = element<HTMLTextAreaElement>('#phonemes')
 const phonemeHint = element<HTMLElement>('#phoneme-hint')
-const presetControl = element<HTMLSelectElement>('#preset')
+const presetKeys = element<HTMLElement>('#presets')
+const playLabel = element<HTMLElement>('#play .key-label')
 const chordControl = element<HTMLSelectElement>('#chord')
 const melodyControl = element<HTMLInputElement>('#melody')
 const melodyHint = element<HTMLElement>('#melody-hint')
@@ -53,7 +55,9 @@ const sliders: Array<{ name: NumericSetting; input: HTMLInputElement; output: HT
   format: format as (value: number) => string,
 }))
 
+// The syntax help sits in the label's tooltip; the display only shows problems.
 const PHONEME_HELP = 'ARPAbet (CMUdict) et extensions E A O U UE EU OE AX, nasales AN ON IN UN, RX NY UY X CC. 1 / 2 / 0 = accent principal / secondaire / atone ; « | » sépare les mots, « _ » insère une courte pause, « , » « . » « ? » marquent la ponctuation ; « A1:90 » impose une durée en millisecondes.'
+element<HTMLLabelElement>('label[for="phonemes"]').title = PHONEME_HELP
 const MELODY_HELP = 'Notes anglaises (C3, D#3, Bb2 ; A4 = 440 Hz) ou françaises (do2, ré#2, sib1 ; la3 = 440 Hz), une par voyelle, en boucle. Vide : intonation parlée.'
 
 const SAMPLES: Record<Language, string> = {
@@ -83,11 +87,35 @@ for (const [code, language] of Object.entries(ESPEAK_LANGUAGES)) languageControl
 for (const [code, engine] of Object.entries(ENGINES)) engineControl.add(new Option(engine.label, code))
 engineControl.addEventListener('change', () => {
   player.stop()
-  playButton.textContent = playing ? 'Arrêter la voix' : 'Lire la phrase'
+  setPlayLabel(playing ? 'Arrêter la voix' : 'Lire la phrase')
   updateEngineHint()
 })
-for (const [key, preset] of Object.entries(PRESETS)) presetControl.add(new Option(preset.label, key))
-presetControl.add(new Option('Personnalisé', 'custom'))
+/** Lights the key of the active preset; none is lit once a setting is changed by hand. */
+function showPreset(selected: string): void {
+  for (const key of presetKeys.querySelectorAll<HTMLButtonElement>('button[data-preset]')) {
+    key.setAttribute('aria-pressed', String(key.dataset.preset === selected))
+  }
+}
+for (const [name, preset] of Object.entries(PRESETS)) {
+  const key = document.createElement('button')
+  key.type = 'button'
+  key.className = 'key'
+  key.dataset.preset = name
+  key.innerHTML = '<span class="led" aria-hidden="true"></span>'
+  key.append(preset.label)
+  key.addEventListener('click', () => {
+    showSettings(preset.settings)
+    sendAllSettings()
+    showPreset(name)
+  })
+  presetKeys.append(key)
+}
+
+/** The play key's label, and its LED lit while the voice plays. */
+function setPlayLabel(text: string): void {
+  playLabel.textContent = text
+  playButton.classList.toggle('is-playing', text === 'Arrêter la voix')
+}
 CHORDS.forEach((label, index) => chordControl.add(new Option(label, String(index))))
 
 function currentSettings(): VoiceSettings {
@@ -134,7 +162,7 @@ function updatePhonemeHint(): void {
   const unknown = unknownPhonemeTokens(phonemeControl.value)
   phonemeHint.textContent = unknown.length > 0
     ? `Symboles inconnus, ignorés par le moteur : ${unknown.join(', ')}`
-    : PHONEME_HELP
+    : ''
   phonemeHint.classList.toggle('warning', unknown.length > 0)
 }
 
@@ -155,6 +183,8 @@ function sendPhonemes(): void {
 }
 
 const player = new BufferPlayer()
+const meter = new BandMeter(element<HTMLCanvasElement>('#meter'))
+player.tap = (context, node) => meter.attach(context, node)
 const currentEngine = () => engineControl.value as EngineName
 const ENGINE_HELP = 'Avec ce moteur, l’étage robot applique le vocoder (hauteur, porteuse, mélodie à une note par syllabe), le lo-fi, la taille et le vibrato ; débit, intonation, tempo, présence et glissando concernent WaxVocoder.'
 
@@ -224,7 +254,7 @@ function scheduleTranscription(): void {
 }
 
 function markCustom(): void {
-  presetControl.value = 'custom'
+  showPreset('custom')
 }
 
 phraseControl.addEventListener('input', () => {
@@ -269,15 +299,9 @@ quantizeControl.addEventListener('change', () => {
   sendSetting('quantize', quantizeControl.checked)
   markCustom()
 })
-presetControl.addEventListener('change', () => {
-  const preset = PRESETS[presetControl.value]
-  if (!preset) return
-  showSettings(preset.settings)
-  sendAllSettings()
-})
 
 showSettings(DEFAULT_SETTINGS)
-presetControl.value = 'natural'
+showPreset('natural')
 updatePhonemeHint()
 void loadDictionary(dictionaryUrl).then((loaded) => {
   lexicon = loaded
@@ -292,7 +316,7 @@ playButton.addEventListener('click', async () => {
   if (currentEngine() !== 'waxvocoder') {
     if (player.playing) {
       player.stop()
-      playButton.textContent = 'Lire la phrase'
+      setPlayLabel('Lire la phrase')
       status.textContent = 'Lecture arrêtée.'
       return
     }
@@ -305,10 +329,10 @@ playButton.addEventListener('click', async () => {
     try {
       const speech = await otherEngineSpeech()
       await player.play(speech, () => {
-        playButton.textContent = 'Lire la phrase'
+        setPlayLabel('Lire la phrase')
         status.textContent = 'Phrase terminée.'
       })
-      playButton.textContent = 'Arrêter la voix'
+      setPlayLabel('Arrêter la voix')
       status.textContent = `Lecture (${ENGINES[currentEngine()].label}, ${(speech.samples.length / speech.sampleRate).toFixed(1)} s).`
     } catch (error) {
       status.textContent = `Synthèse impossible : ${error instanceof Error ? error.message : String(error)}`
@@ -326,7 +350,7 @@ playButton.addEventListener('click', async () => {
   if (startingEngine) {
     initializing = true
     playButton.disabled = true
-    playButton.textContent = 'Chargement du moteur…'
+    setPlayLabel('Chargement du moteur…')
     status.textContent = 'Initialisation du moteur audio et chargement WASM…'
   }
   let pendingContext: AudioContext | undefined
@@ -355,7 +379,7 @@ playButton.addEventListener('click', async () => {
         }
         if (event.data.type === 'finished') {
           playing = false
-          playButton.textContent = 'Lire la phrase'
+          setPlayLabel('Lire la phrase')
           status.textContent = 'Phrase terminée.'
         }
         if (event.data.type === 'meter' && playing && engineReady && !engineFailed) {
@@ -367,6 +391,7 @@ playButton.addEventListener('click', async () => {
         status.textContent = 'Le processeur audio s’est arrêté sur une erreur.'
       }
       pendingNode.connect(pendingContext.destination)
+      meter.attach(pendingContext, pendingNode)
       await audioStart
       context = pendingContext
       pendingContext = undefined
@@ -377,7 +402,8 @@ playButton.addEventListener('click', async () => {
 
     playing = !playing
     voiceNode.port.postMessage({ type: playing ? 'active' : 'stop' })
-    playButton.textContent = playing ? 'Arrêter la voix' : 'Lire la phrase'
+    setPlayLabel(playing ? 'Arrêter la voix' : 'Lire la phrase')
+    if (playing) meter.wake()
     status.textContent = engineFailed
       ? 'Le moteur WASM a échoué ; recharge la page après correction.'
       : !engineReady
@@ -392,7 +418,7 @@ playButton.addEventListener('click', async () => {
     if (startingEngine) {
       initializing = false
       playButton.disabled = false
-      if (!voiceNode) playButton.textContent = 'Réessayer'
+      if (!voiceNode) setPlayLabel('Réessayer')
     }
   }
 })

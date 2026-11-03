@@ -85,6 +85,9 @@ export async function synthesize(
 export class BufferPlayer {
   private context: AudioContext | undefined
   private source: AudioBufferSourceNode | undefined
+  private release: (() => void) | undefined
+  /** Called with each new source, e.g. to show it on a meter; returns how to let it go. */
+  tap: ((context: AudioContext, node: AudioNode) => () => void) | undefined
 
   async play(speech: Speech, onEnded: () => void): Promise<void> {
     this.stop()
@@ -95,8 +98,11 @@ export class BufferPlayer {
     const source = this.context.createBufferSource()
     source.buffer = buffer
     source.connect(this.context.destination)
+    this.release = this.tap?.(this.context, source)
     source.onended = () => {
       if (this.source === source) this.source = undefined
+      this.release?.()
+      this.release = undefined
       onEnded()
     }
     this.source = source
@@ -110,6 +116,8 @@ export class BufferPlayer {
       source.onended = null
       source.stop()
     }
+    this.release?.()
+    this.release = undefined
   }
 
   get playing(): boolean {

@@ -27,6 +27,21 @@ texte ──► transcription ────────────────�
 - `src/voice-settings.ts` : réglages partagés par l’interface, le worklet et les scripts, et préréglages.
 - `src/audio/` : AudioWorklet, polyfills `TextEncoder`/`TextDecoder` pour l’AudioWorkletGlobalScope, export WAV.
 
+## Moteurs de voix
+
+Le menu « Moteur » choisit qui parle ; l’étage robot (vocoder, hauteur de la porteuse, accord) s’applique à tous :
+
+- **WaxVocoder** : la voix à formants du moteur Rust (temps réel, robot, chant note par note, tempo, tous les réglages).
+- **eSpeak NG** : la voix d’eSpeak NG elle-même (déjà chargé pour la transcription).
+- **Piper** : voix neuronale naturelle, entraînée sur un vrai locuteur (`src/engines/piper.ts`, ONNX Runtime Web 1.30.0 en WASM, phonèmes par le même eSpeak NG). Voix française `fr_FR-siwis-medium` (CC BY 4.0, SIWIS, université d’Édimbourg ; ≈ 63 Mo), téléchargée au premier usage depuis `voices/<id>/` à côté de la page s’il existe, sinon depuis Hugging Face (`rhasspy/piper-voices`). Pas encore de voix Piper pour l’anglais et l’allemand dans l’application (candidates libres : `en_GB-cori`, domaine public ; `en_US-libritts_r`, CC BY 4.0 ; `de_DE-thorsten`, CC0).
+
+Une voix Piper passée dans le vocoder, c’est la méthode des robots de Kraftwerk (une vraie voix dans un vocoder). Avec eSpeak NG et Piper, les réglages propres à WaxVocoder (mélodie, tempo, intonation, taille…) sont sans effet.
+
+```sh
+npm run voice -- fr     # télécharge la voix Piper française dans voices/ (scripts, tests, serveur de développement)
+npm run engines        # la même phrase avec chaque moteur, puis dans le vocoder → ecoute/moteurs/comparaison.wav
+```
+
 ## Robot et effets
 
 | Préréglage | Effet |
@@ -85,6 +100,7 @@ npm run build:wasm && npm run build   # produit dist/
 Déposer **tout le contenu** de `dist/` (y compris `.htaccess`) sur le serveur, à la racine du site ou dans n’importe quel sous-dossier : les adresses sont relatives (`base: './'`). Il n’y a rien à exécuter côté serveur, ce sont des fichiers statiques (≈ 28 Mo, dont 24 Mo de données eSpeak NG téléchargées seulement au premier passage hors anglais).
 
 - **HTTPS obligatoire** : le navigateur n’ouvre le moteur audio (AudioWorklet) que sur une connexion sécurisée ; en HTTP, l’application l’indique au lieu de lire.
+- **Piper** : la voix (≈ 63 Mo) est téléchargée par le navigateur du visiteur depuis Hugging Face au premier choix du moteur Piper. Pour ne pas dépendre de Hugging Face, déposer aussi `voices/fr_FR-siwis-medium/` (obtenu par `npm run voice -- fr`) à côté de `index.html` : la page le préfère. Le moteur ONNX Runtime (14 Mo, 3,7 Mo compressé) n’est chargé qu’à ce moment-là.
 - **Apache** : `public/.htaccess` (copié dans `dist/`) déclare les types `.wasm` et `.data`, active la compression (données eSpeak NG 24 → 12 Mo, dictionnaire 3,3 → 0,9 Mo) et met en cache longue durée les fichiers d’`assets/`, dont le nom porte une empreinte.
 - **nginx** : ajouter `application/wasm wasm;` aux types si besoin, et `gzip on; gzip_types application/octet-stream application/wasm text/plain text/javascript text/css;`.
 - **Licences** : le pied de page renvoie au code source (GPL-3.0-or-later), à celui d’eSpeak NG et à sa licence (`assets/espeak-ng.COPYING.txt`), ce qu’exige la GPL quand on distribue l’application.

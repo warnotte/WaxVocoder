@@ -17,13 +17,16 @@
     "build:wasm": "wasm-pack build crates/voice-engine --target web --out-dir ../../src/wasm/voice-engine --out-name voice_engine",
     "render": "node scripts/render-phrase.ts",
     "vocode": "node scripts/vocode-file.ts",
-    "demo": "node scripts/demo-song.ts"
+    "demo": "node scripts/demo-song.ts",
+    "voice": "node scripts/fetch-voice.ts",
+    "engines": "node scripts/compare-engines.ts"
   },
   "devDependencies": {
     "typescript": "7.0.2",
     "vite": "8.3.5"
   },
   "dependencies": {
-    "@echogarden/espeak-ng-emscripten": "0.3.5"
+    "@echogarden/espeak-ng-emscripten": "0.3.5",
+    "onnxruntime-web": "1.30.0"
   }
 }

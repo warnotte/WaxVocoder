@@ -6,6 +6,8 @@ import espeakDataUrl from '@echogarden/espeak-ng-emscripten/espeak-ng.data?url'
 import initWasm, { VoiceEngine } from './wasm/voice-engine/voice_engine.js'
 import { encodeWav } from './audio/wav'
 import { loadDictionary } from './dictionary'
+import { BufferPlayer, synthesize } from './engines/browser'
+import { type EngineName, ENGINES, PIPER_VOICES, type Speech } from './engines/index'
 import { type EspeakTranscriber, loadEspeak } from './espeak'
 import { ESPEAK_LANGUAGES, type Language } from './ipa'
 import { type Lexicon, transcribe, unknownPhonemeTokens } from './phonemes'
@@ -16,6 +18,8 @@ const element = <T extends Element>(selector: string): T => document.querySelect
 const playButton = element<HTMLButtonElement>('#play')
 const exportButton = element<HTMLButtonElement>('#export')
 const languageControl = element<HTMLSelectElement>('#language')
+const engineControl = element<HTMLSelectElement>('#engine')
+const engineHint = element<HTMLElement>('#engine-hint')
 const phraseTitle = element<HTMLElement>('#phrase-title')
 const phraseControl = element<HTMLTextAreaElement>('#phrase')
 const phonemeControl = element<HTMLTextAreaElement>('#phonemes')
@@ -76,6 +80,12 @@ let engineFailed = false
 let initializing = false
 
 for (const [code, language] of Object.entries(ESPEAK_LANGUAGES)) languageControl.add(new Option(language.label, code))
+for (const [code, engine] of Object.entries(ENGINES)) engineControl.add(new Option(engine.label, code))
+engineControl.addEventListener('change', () => {
+  player.stop()
+  playButton.textContent = playing ? 'Arrêter la voix' : 'Lire la phrase'
+  updateEngineHint()
+})
 for (const [key, preset] of Object.entries(PRESETS)) presetControl.add(new Option(preset.label, key))
 presetControl.add(new Option('Personnalisé', 'custom'))
 CHORDS.forEach((label, index) => chordControl.add(new Option(label, String(index))))
@@ -144,6 +154,33 @@ function sendPhonemes(): void {
   voiceNode?.port.postMessage({ type: 'phonemes', value: enginePhonemes() })
 }
 
+const player = new BufferPlayer()
+const currentEngine = () => engineControl.value as EngineName
+const ENGINE_HELP = 'Avec ce moteur, seuls comptent le texte, la langue, le vocoder (0 = voix telle quelle), sa hauteur et son accord ; les autres réglages concernent WaxVocoder.'
+
+function updateEngineHint(): void {
+  const engine = currentEngine()
+  engineHint.hidden = engine === 'waxvocoder'
+  const voice = PIPER_VOICES[currentLanguage()]
+  engineHint.textContent = engine === 'piper' && !voice
+    ? 'Pas encore de voix Piper pour cette langue : choisis le français, ou un autre moteur.'
+    : engine === 'piper' ? `${ENGINE_HELP} Voix ${voice?.id}, ${voice?.licence}.` : ENGINE_HELP
+  engineHint.classList.toggle('warning', engine === 'piper' && !voice)
+}
+
+/** Speech from eSpeak NG or Piper, with the robot stage set by the vocoder controls. */
+async function otherEngineSpeech(): Promise<Speech> {
+  const engine = currentEngine()
+  if (engine === 'waxvocoder') throw new Error('WaxVocoder passe par le moteur temps réel')
+  const settings = currentSettings()
+  const transcriber = await loadTranscriber()
+  return synthesize(engine, phraseControl.value, currentLanguage(), transcriber, {
+    mix: settings.vocoder,
+    frequency: settings.frequency,
+    chord: settings.chord,
+  }, (fraction) => { status.textContent = `Téléchargement de la voix Piper : ${Math.round(fraction * 100)} %` })
+}
+
 function currentLanguage(): Language {
   return languageControl.value as Language
 }
@@ -202,6 +239,7 @@ languageControl.addEventListener('change', () => {
   phraseTitle.textContent = `Texte (${ESPEAK_LANGUAGES[language].label.toLowerCase()})`
   if (Object.values(SAMPLES).includes(phraseControl.value.trim())) phraseControl.value = SAMPLES[language]
   voiceNode?.port.postMessage({ type: 'language', value: language })
+  updateEngineHint()
   phonemesEdited = false
   void retranscribe()
 })
@@ -253,6 +291,34 @@ void loadDictionary(dictionaryUrl).then((loaded) => {
 
 playButton.addEventListener('click', async () => {
   if (initializing) return
+  if (currentEngine() !== 'waxvocoder') {
+    if (player.playing) {
+      player.stop()
+      playButton.textContent = 'Lire la phrase'
+      status.textContent = 'Lecture arrêtée.'
+      return
+    }
+    if (playing) {
+      playing = false
+      voiceNode?.port.postMessage({ type: 'stop' })
+    }
+    playButton.disabled = true
+    status.textContent = `Synthèse avec ${ENGINES[currentEngine()].label}…`
+    try {
+      const speech = await otherEngineSpeech()
+      await player.play(speech, () => {
+        playButton.textContent = 'Lire la phrase'
+        status.textContent = 'Phrase terminée.'
+      })
+      playButton.textContent = 'Arrêter la voix'
+      status.textContent = `Lecture (${ENGINES[currentEngine()].label}, ${(speech.samples.length / speech.sampleRate).toFixed(1)} s).`
+    } catch (error) {
+      status.textContent = `Synthèse impossible : ${error instanceof Error ? error.message : String(error)}`
+    } finally {
+      playButton.disabled = false
+    }
+    return
+  }
   if (!window.isSecureContext) {
     // AudioWorklet only exists in secure contexts.
     status.textContent = 'La voix demande une page en HTTPS (ou sur localhost) : sans connexion sécurisée, le navigateur bloque le moteur audio.'
@@ -336,6 +402,15 @@ playButton.addEventListener('click', async () => {
 exportButton.addEventListener('click', async () => {
   exportButton.disabled = true
   try {
+    if (currentEngine() !== 'waxvocoder') {
+      const { samples, sampleRate } = await otherEngineSpeech()
+      const url = URL.createObjectURL(new Blob([encodeWav(samples, sampleRate)], { type: 'audio/wav' }))
+      const link = Object.assign(document.createElement('a'), { href: url, download: `wax-vocoder-${currentEngine()}.wav` })
+      link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1_000)
+      status.textContent = `WAV exporté (${ENGINES[currentEngine()].label}, ${(samples.length / sampleRate).toFixed(2)} s, ${sampleRate} Hz).`
+      return
+    }
     await initWasm({ module_or_path: await compileWasm() })
     const sampleRate = 44_100
     const engine = new VoiceEngine(sampleRate)

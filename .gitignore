@@ -7,3 +7,4 @@ ecoute/
 release/
 .tmp-agent/
 *.tsbuildinfo
+voices/

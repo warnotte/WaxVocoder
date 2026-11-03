@@ -22,7 +22,12 @@
             Langue
             <select id="language"></select>
           </label>
+          <label class="select-control" for="engine" title="WaxVocoder : voix à formants, robot, chant. eSpeak NG : sa propre voix. Piper : voix naturelle (téléchargée au premier usage, ≈ 60 Mo).">
+            Moteur
+            <select id="engine"></select>
+          </label>
         </div>
+        <p id="engine-hint" class="hint" hidden></p>
         <textarea id="phrase" rows="2" maxlength="240">Hello, I am a talking machine.</textarea>
         <label class="phoneme-label" for="phonemes">Phonèmes générés — modifiables</label>
         <textarea id="phonemes" rows="3" spellcheck="false">HH AH0 L OW1 , AY1 | AE1 M | AH0 | T AO1 K IH0 NG | M AH0 SH IY1 N .</textarea>
@@ -107,7 +112,8 @@
         Synthèse à formants et vocoder · Rust / WebAssembly / AudioWorklet · Logiciel libre sous GPL-3.0-or-later, code source :
         <a href="https://github.com/warnotte/WaxVocoder">github.com/warnotte/WaxVocoder</a> ·
         Transcription : eSpeak NG (GPL-3.0, <a href="https://github.com/echogarden-project/espeak-ng-emscripten">sources</a>, <a href="assets/espeak-ng.COPYING.txt">licence</a>) ·
-        Prononciations anglaises : CMU Pronouncing Dictionary (<a href="https://github.com/warnotte/WaxVocoder/blob/main/src/data/CMUDICT_LICENSE.txt">licence de type BSD</a>)
+        Prononciations anglaises : CMU Pronouncing Dictionary (<a href="https://github.com/warnotte/WaxVocoder/blob/main/src/data/CMUDICT_LICENSE.txt">licence de type BSD</a>) ·
+        Moteur Piper : ONNX Runtime Web (<a href="assets/onnxruntime-web.LICENSE.txt">MIT</a>), voix française « siwis » (<a href="https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR/siwis">SIWIS</a>, université d’Édimbourg, <a href="https://creativecommons.org/licenses/by/4.0/deed.fr">CC BY 4.0</a>)
       </footer>
     </main>
     <script type="module" src="/src/main.ts"></script>

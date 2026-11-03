@@ -98,7 +98,8 @@ export type TimedConversion = Conversion & {
 }
 
 export class EspeakTranscriber {
-  private readonly worker: EspeakWorker
+  /** The eSpeak NG worker, also used for its own voice and to phonemize for Piper. */
+  readonly worker: EspeakWorker
 
   constructor(worker: EspeakWorker) {
     this.worker = worker

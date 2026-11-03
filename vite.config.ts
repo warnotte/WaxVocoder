@@ -13,6 +13,8 @@ function espeakLicense(): Plugin {
     apply: 'build',
     generateBundle() {
       this.emitFile({ type: 'asset', fileName: 'assets/espeak-ng.COPYING.txt', source: readFileSync(`${ESPEAK}/COPYING`) })
+      // The minified bundle drops ONNX Runtime's MIT notice, which must ship with it.
+      this.emitFile({ type: 'asset', fileName: 'assets/onnxruntime-web.LICENSE.txt', source: readFileSync('licenses/onnxruntime-web.LICENSE.txt') })
     },
   }
 }
@@ -24,6 +26,6 @@ export default defineConfig({
   // eSpeak NG (wasm2js, ≈ 780 kB) is a lazily loaded chunk, fetched only for French or German.
   build: { chunkSizeWarningLimit: 900 },
   // Served unbundled in development: pre-bundling 780 kB of wasm2js gains nothing.
-  optimizeDeps: { exclude: ['@echogarden/espeak-ng-emscripten'] },
+  optimizeDeps: { exclude: ['@echogarden/espeak-ng-emscripten', 'onnxruntime-web'] },
   plugins: [espeakLicense()],
 })

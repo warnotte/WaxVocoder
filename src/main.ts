@@ -2,6 +2,7 @@ import './style.css'
 import processorUrl from './audio/voice-processor.ts?worker&url'
 import wasmUrl from './wasm/voice-engine/voice_engine_bg.wasm?url'
 import dictionaryUrl from './data/cmudict.txt?url'
+import espeakDataUrl from '@echogarden/espeak-ng-emscripten/espeak-ng.data?url'
 import initWasm, { VoiceEngine } from './wasm/voice-engine/voice_engine.js'
 import { encodeWav } from './audio/wav'
 import { loadDictionary } from './dictionary'
@@ -148,7 +149,7 @@ function currentLanguage(): Language {
 }
 
 function loadTranscriber(): Promise<EspeakTranscriber> {
-  espeak ??= loadEspeak()
+  espeak ??= loadEspeak({ dataUrl: espeakDataUrl })
   espeak.catch(() => { espeak = undefined })
   return espeak
 }
@@ -174,7 +175,9 @@ async function retranscribe(): Promise<void> {
     timedPhonemes = timed
     sendPhonemes()
     if (unknown.length > 0) status.textContent = `Sons non pris en charge, ignorés : ${[...new Set(unknown)].join(' ')}`
-    else if (loading) status.textContent = `eSpeak NG prêt : transcription ${ESPEAK_LANGUAGES[language].label.toLowerCase()}.`
+    else if (loading || status.textContent?.startsWith('eSpeak NG prêt')) {
+      status.textContent = `eSpeak NG prêt : transcription ${ESPEAK_LANGUAGES[language].label.toLowerCase()}.`
+    }
   } catch (error) {
     if (request === transcription) status.textContent = `eSpeak NG indisponible : ${String(error)}`
   }

@@ -172,9 +172,31 @@ export class EspeakTranscriber {
   }
 }
 
+export type EspeakOptions = {
+  /**
+   * Address of `espeak-ng.data` (≈ 24 MB of language data). Required in a
+   * browser: eSpeak NG looks for the file beside its own script, which a
+   * bundler moves (Vite's dependency cache, hashed chunks). The data is then
+   * fetched here and handed to eSpeak NG. Node reads the file beside the package.
+   */
+  dataUrl?: string
+}
+
+/** eSpeak NG's data package, as the browser fetches it; rejects anything but the data file. */
+async function fetchEspeakData(url: string): Promise<ArrayBuffer> {
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`espeak-ng.data: HTTP ${response.status} at ${url}`)
+  if (/text\/html/i.test(response.headers.get('content-type') ?? '')) {
+    throw new Error(`espeak-ng.data not found at ${url}: the server answered with a web page`)
+  }
+  return response.arrayBuffer()
+}
+
 /** Loads the eSpeak NG WebAssembly build (≈ 25 MB with its language data). */
-export async function loadEspeak(): Promise<EspeakTranscriber> {
+export async function loadEspeak(options: EspeakOptions = {}): Promise<EspeakTranscriber> {
   const { default: initialize } = await import('@echogarden/espeak-ng-emscripten')
-  const module = await initialize()
+  const data = options.dataUrl ? await fetchEspeakData(options.dataUrl) : undefined
+  // Emscripten's hook for a data package fetched by the host (eSpeak NG overrides `locateFile`).
+  const module = await initialize(data ? { getPreloadedPackage: () => data } : undefined)
   return new EspeakTranscriber(new module.eSpeakNGWorker())
 }

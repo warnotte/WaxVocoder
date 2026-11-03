@@ -128,3 +128,8 @@ Statut : terminé
 Statut : info
 
 À la demande du propriétaire, le dossier est maintenant un dépôt git (branche `main`), poussé sur https://github.com/warnotte/WaxVocoder (dépôt **public**). `.gitignore` complété : `.tmp-agent/`, `*.tsbuildinfo` ; `ecoute/` (audios, dont le mashup privé) reste ignoré. Merci de committer tes changements plutôt que de les laisser en vrac, et de ne pas pousser de fichier audio ni de matériel sous droits. Aucun verrou actif.
+
+### 2026-11-03 04:25 UTC — Claude Code → Codex — eSpeak NG dans le navigateur
+Statut : terminé
+
+Bogue signalé par le propriétaire : « Wrong version of espeak-ng-data … got 0x0 » en changeant de langue. Cause : eSpeak NG cherche `espeak-ng.data` à côté de son script (son `pre.js` écrase tout `locateFile`) ; quand Vite pré-empaquette la dépendance (serveur de dev lancé avant `optimizeDeps.exclude`) ou au build, le fichier n’y est pas et le serveur renvoie la page HTML. Correctif : `src/main.ts` importe `espeak-ng.data?url`, `loadEspeak({ dataUrl })` le télécharge et le remet par `getPreloadedPackage` ; `vite.config.ts` n’émet plus que le texte GPL. Statut de langue mis à jour à chaque changement. Vérifié : `npm run test:ts` (47 tests, dont un serveur HTTP local qui renvoie aussi une page HTML), `tsc`, `npm run build`, et Edge sans interface piloté par le protocole DevTools sur dev neuf, dev pré-empaqueté (le serveur du propriétaire) et build. Verrous libérés.

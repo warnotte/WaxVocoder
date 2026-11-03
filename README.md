@@ -100,7 +100,7 @@ Tests Rust : indices acoustiques de l’intelligibilité (spectres de friction e
 ## Limites connues
 
 - Anglais : pas de normalisation des nombres et abréviations, une seule prononciation par mot (« read » est toujours /rɛd/). Français et allemand : qualité de transcription d’eSpeak NG ; la synthèse de ces langues réutilise un modèle formantique conçu d’abord pour l’anglais.
-- eSpeak NG n’a pas encore été vérifié dans un navigateur réel par l’agent (les fichiers sont servis aux bonnes adresses et la transcription est testée sous Node).
+- Navigateur : eSpeak NG cherche `espeak-ng.data` à côté de son propre script, que Vite déplace (cache de dépendances en développement, fragments hachés au build). L’application télécharge donc elle-même ce fichier (import `?url`) et le remet à eSpeak NG (`loadEspeak({ dataUrl })`, crochet Emscripten `getPreloadedPackage`) ; une page HTML reçue à la place des données lève une erreur claire. Vérifié dans Edge sans interface (serveur de développement, dépendance pré-empaquetée, build de production) : passage du français à l’allemand, au québécois et au belge. Le son lui-même n’a pas été écouté dans le navigateur par l’agent.
 - Voix synthétique masculine, volontairement électronique ; le vocoder réduit la résolution spectrale (les voyelles restent distinctes, mais moins nettes qu’en voix sèche).
 - L’intelligibilité a été vérifiée par des mesures acoustiques, pas par un panel d’auditeurs.
 - Poids : dictionnaire CMUdict 3,3 Mo (≈ 0,9 Mo compressé en gzip) ; eSpeak NG 0,8 Mo de code et 24 Mo de données (toutes langues), chargés seulement pour le français ou l’allemand.

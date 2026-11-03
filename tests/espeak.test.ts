@@ -1,5 +1,6 @@
 // Runs the real eSpeak NG WebAssembly build (GPL-3.0) through the transcriber.
 import { readFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
 import assert from 'node:assert/strict'
 import { before, describe, it } from 'node:test'
 import initialize, { VoiceEngine } from '../src/wasm/voice-engine/voice_engine.js'
@@ -38,6 +39,26 @@ const corpus = {
     'The quick brown fox jumps over the lazy dog?',
   ],
 } as const
+
+describe('eSpeak NG data in a browser-like setting', () => {
+  it('uses the data fetched by the host, wherever the script was bundled', async () => {
+    // A dev server answers unknown paths with the page: that must be reported, not parsed.
+    const data = await readFile(new URL('../node_modules/@echogarden/espeak-ng-emscripten/espeak-ng.data', import.meta.url))
+    const server = createServer((request, response) => {
+      if (request.url === '/assets/espeak-ng-hash.data') response.writeHead(200, { 'content-type': 'application/octet-stream' }).end(data)
+      else response.writeHead(200, { 'content-type': 'text/html' }).end('<!doctype html><title>WaxVocoder</title>')
+    })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const { port } = server.address() as { port: number }
+    try {
+      const fetched = await loadEspeak({ dataUrl: `http://127.0.0.1:${port}/assets/espeak-ng-hash.data` })
+      assert.equal(fetched.transcribe('Bonjour.', 'fr').phonemes, 'B ON2 ZH U1 RX .')
+      await assert.rejects(loadEspeak({ dataUrl: `http://127.0.0.1:${port}/espeak-ng.data` }), /answered with a web page/)
+    } finally {
+      server.close()
+    }
+  })
+})
 
 describe('eSpeak NG transcription', () => {
   it('maps every sound of the reference sentences', () => {

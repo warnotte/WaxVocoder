@@ -1,0 +1,23 @@
+# WaxVocoder : réglages pour Apache (les autres serveurs ignorent ce fichier).
+# La page doit être servie en HTTPS : le navigateur n'ouvre le moteur audio
+# (AudioWorklet) que sur une connexion sécurisée.
+
+AddType application/wasm .wasm
+AddType application/octet-stream .data
+AddType text/javascript .js
+AddCharset utf-8 .html .js .css .txt
+
+# Compression : les données d'eSpeak NG passent de 24 à 12 Mo, le dictionnaire de 3,3 à 0,9 Mo.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/wasm application/octet-stream text/plain
+</IfModule>
+
+# Les fichiers d'assets/ portent une empreinte dans leur nom : ils peuvent rester en cache.
+<IfModule mod_headers.c>
+  <FilesMatch "-[A-Za-z0-9_-]{8}\.(js|css|wasm|data|txt)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>

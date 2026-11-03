@@ -4,5 +4,6 @@ target/
 src/wasm/voice-engine/
 *.log
 ecoute/
+release/
 .tmp-agent/
 *.tsbuildinfo

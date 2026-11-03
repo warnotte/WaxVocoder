@@ -76,6 +76,19 @@ npm run vocode -- morceau.wav morceau-robot.wav --note F2 --chord 2 --mix 1 --sp
 
 `--note` accepte les mêmes noms que la mélodie (`F2`, `fa1`…), `--mix` dose la voix d’origine (0) et la voix vocodée (1). Sur un mixage complet, tout ce qui occupe la bande (voix, claps, nappes) est vocodé : il n’y a pas de séparation de sources.
 
+## Mise en ligne
+
+```sh
+npm run build:wasm && npm run build   # produit dist/
+```
+
+Déposer **tout le contenu** de `dist/` (y compris `.htaccess`) sur le serveur, à la racine du site ou dans n’importe quel sous-dossier : les adresses sont relatives (`base: './'`). Il n’y a rien à exécuter côté serveur, ce sont des fichiers statiques (≈ 28 Mo, dont 24 Mo de données eSpeak NG téléchargées seulement au premier passage hors anglais).
+
+- **HTTPS obligatoire** : le navigateur n’ouvre le moteur audio (AudioWorklet) que sur une connexion sécurisée ; en HTTP, l’application l’indique au lieu de lire.
+- **Apache** : `public/.htaccess` (copié dans `dist/`) déclare les types `.wasm` et `.data`, active la compression (données eSpeak NG 24 → 12 Mo, dictionnaire 3,3 → 0,9 Mo) et met en cache longue durée les fichiers d’`assets/`, dont le nom porte une empreinte.
+- **nginx** : ajouter `application/wasm wasm;` aux types si besoin, et `gzip on; gzip_types application/octet-stream application/wasm text/plain text/javascript text/css;`.
+- **Licences** : le pied de page renvoie au code source (GPL-3.0-or-later), à celui d’eSpeak NG et à sa licence (`assets/espeak-ng.COPYING.txt`), ce qu’exige la GPL quand on distribue l’application.
+
 ## Démo de chanson
 
 `npm run demo` rend « Kaos le facteur », une chanson électro-pop de près de 2 minutes à 126 BPM : couplets en français (le premier sur un texte du propriétaire), pré-refrain et pont en allemand et en anglais, refrain trilingue dans une même ligne (« Kaos, le facteur / der Briefträger, the postman »), dernier refrain un ton plus haut. Le script vérifie que chaque mélodie a autant de notes que de syllabes et qu’aucune ligne ne déborde, cale la première voyelle de chaque ligne sur le temps, compresse et double la voix, creuse la musique sous la voix et pompe sur la grosse caisse. Sortie dans `ecoute/demo/` : le mix, la piste voix seule calée sur la grille (mesure 1 à t = 0) et l’accompagnement seul ; `DEMO_STEMS=1` écrit aussi les bus avant mastering. L’accompagnement n’est qu’un guide d’écoute ; le rythme et la musique ont vocation à venir de NoobSynth3.

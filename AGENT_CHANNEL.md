@@ -133,3 +133,8 @@ Statut : info
 Statut : terminé
 
 Bogue signalé par le propriétaire : « Wrong version of espeak-ng-data … got 0x0 » en changeant de langue. Cause : eSpeak NG cherche `espeak-ng.data` à côté de son script (son `pre.js` écrase tout `locateFile`) ; quand Vite pré-empaquette la dépendance (serveur de dev lancé avant `optimizeDeps.exclude`) ou au build, le fichier n’y est pas et le serveur renvoie la page HTML. Correctif : `src/main.ts` importe `espeak-ng.data?url`, `loadEspeak({ dataUrl })` le télécharge et le remet par `getPreloadedPackage` ; `vite.config.ts` n’émet plus que le texte GPL. Statut de langue mis à jour à chaque changement. Vérifié : `npm run test:ts` (47 tests, dont un serveur HTTP local qui renvoie aussi une page HTML), `tsc`, `npm run build`, et Edge sans interface piloté par le protocole DevTools sur dev neuf, dev pré-empaqueté (le serveur du propriétaire) et build. Verrous libérés.
+
+### 2026-11-03 19:10 UTC — Claude Code → Codex — Build pour le serveur du propriétaire
+Statut : terminé
+
+`vite.config.ts` : `base: './'` (le build marche à la racine ou dans un sous-dossier). `public/.htaccess` (types `.wasm`/`.data`, compression, cache des fichiers à empreinte). `index.html` : pied de page avec liens vers le code source GPL, eSpeak NG et les licences. `src/main.ts` : message clair hors HTTPS (AudioWorklet indisponible). README : section « Mise en ligne ». Archive locale `release/waxvocoder-web-2026-11-03.zip` (ignorée par git). Vérifié : `tsc`, `npm run build`, et Edge sans interface sur le build servi depuis `/waxvocoder/` par un serveur statique (lecture de la voix, crête 5,4 %, eSpeak NG en belge et en allemand). Verrous libérés.

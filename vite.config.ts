@@ -18,6 +18,8 @@ function espeakLicense(): Plugin {
 }
 
 export default defineConfig({
+  // Relative addresses: the build works at the root of a site or in any sub-folder.
+  base: './',
   worker: { format: 'es' },
   // eSpeak NG (wasm2js, ≈ 780 kB) is a lazily loaded chunk, fetched only for French or German.
   build: { chunkSizeWarningLimit: 900 },

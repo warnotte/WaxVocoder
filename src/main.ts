@@ -253,6 +253,11 @@ void loadDictionary(dictionaryUrl).then((loaded) => {
 
 playButton.addEventListener('click', async () => {
   if (initializing) return
+  if (!window.isSecureContext) {
+    // AudioWorklet only exists in secure contexts.
+    status.textContent = 'La voix demande une page en HTTPS (ou sur localhost) : sans connexion sécurisée, le navigateur bloque le moteur audio.'
+    return
+  }
   const startingEngine = !voiceNode
   if (startingEngine) {
     initializing = true

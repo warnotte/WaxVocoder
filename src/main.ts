@@ -173,6 +173,8 @@ async function otherEngineSpeech(): Promise<Speech> {
   const engine = currentEngine()
   if (engine === 'waxvocoder') throw new Error('WaxVocoder passe par le moteur temps réel')
   const settings = currentSettings()
+  // The robot stage runs WaxVocoder's vocoder here, on the page (the voice itself runs in the AudioWorklet).
+  await initWasm({ module_or_path: await compileWasm() })
   const transcriber = await loadTranscriber()
   return synthesize(engine, phraseControl.value, currentLanguage(), transcriber, {
     mix: settings.vocoder,

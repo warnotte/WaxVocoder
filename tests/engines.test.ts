@@ -3,7 +3,9 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { before, describe, it } from 'node:test'
 import initialize from '../src/wasm/voice-engine/voice_engine.js'
-import { espeakSpeech, PIPER_VOICES, resample, robotize } from '../src/engines/index.ts'
+import { espeakSpeech, PIPER_VOICES, resample, robotize, robotSettings } from '../src/engines/index.ts'
+import { changeSpeed, lofi, syllableBoundaries, vibrato } from '../src/engines/robot.ts'
+import { PRESETS } from '../src/voice-settings.ts'
 import { phonemeIds, type PiperConfig, piperPhonemes, PiperVoice } from '../src/engines/piper.ts'
 import { type EspeakTranscriber, type EspeakWorker, loadEspeak } from '../src/espeak.ts'
 
@@ -59,6 +61,46 @@ describe('engines and robot stage', () => {
     assert.equal(robot.length, speech.samples.length)
     const peak = robot.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)
     assert.ok(Math.abs(peak - 0.89) < 1e-3, `peak ${peak}`)
+  })
+
+  it('apply every robot preset to an outside voice', () => {
+    const speech = espeakSpeech(espeak.worker, 'fr', 'Bonjour, je suis une machine qui parle.')
+    for (const [name, preset] of Object.entries(PRESETS)) {
+      const robot = robotize(speech, robotSettings(preset.settings))
+      assert.ok(robot.every(Number.isFinite), name)
+      if (name !== 'natural') assert.notEqual(robot, speech.samples, `${name} leaves the voice unchanged`)
+    }
+    // Size: a small robot is higher and faster, a giant lower and slower.
+    assert.equal(robotize(speech, robotSettings(PRESETS.tinyRobot.settings)).length, Math.floor(speech.samples.length / 1.4))
+    assert.equal(robotize(speech, robotSettings(PRESETS.giant.settings)).length, Math.floor(speech.samples.length / 0.72))
+  })
+
+  it('find one boundary between syllables, for one note each', () => {
+    const rate = 22_050
+    // Three 150 ms « vowels » separated by 80 ms of near silence.
+    const samples = Float32Array.from({ length: Math.round(0.69 * rate) }, (_, index) => {
+      const time = index / rate
+      const vowel = time % 0.23 < 0.15
+      return (vowel ? 0.5 : 0.01) * Math.sin(2 * Math.PI * 150 * time)
+    })
+    const boundaries = syllableBoundaries(samples, rate)
+    assert.equal(boundaries.length, 2, JSON.stringify(boundaries))
+    boundaries.forEach((boundary, index) => {
+      const seconds = boundary / rate
+      assert.ok(seconds > 0.15 + index * 0.23 - 0.03 && seconds < 0.23 + index * 0.23 + 0.03, `${seconds} s`)
+    })
+  })
+
+  it('change speed, swing the pitch and crush the sound like the engine', () => {
+    const tone = Float32Array.from({ length: 22_050 }, (_, index) => Math.sin((2 * Math.PI * 200 * index) / 22_050))
+    assert.equal(changeSpeed(tone, 2).length, 11_025)
+    assert.equal(changeSpeed(tone, 1), tone)
+    const wobbly = vibrato(tone, 22_050, 2)
+    assert.equal(wobbly.length, tone.length)
+    assert.ok(wobbly.some((sample, index) => Math.abs(sample - tone[index]) > 0.1))
+    const crushed = lofi(tone, 22_050, 1)
+    assert.ok(new Set(crushed).size < 200, 'few distinct levels at full lo-fi')
+    assert.equal(lofi(tone, 22_050, 0), tone)
   })
 
   it('resample between rates', () => {

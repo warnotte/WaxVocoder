@@ -7,7 +7,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import EspeakInitializer from '@echogarden/espeak-ng-emscripten'
 import initialize, { VoiceEngine } from '../src/wasm/voice-engine/voice_engine.js'
 import { encodeWav } from '../src/audio/wav.ts'
-import { espeakSpeech, PIPER_VOICES, resample, robotize, type Speech } from '../src/engines/index.ts'
+import { espeakSpeech, PIPER_VOICES, resample, robotize, robotSettings, type Speech } from '../src/engines/index.ts'
 import { type PiperConfig, piperPhonemes, PiperVoice } from '../src/engines/piper.ts'
 import { loadEspeak } from '../src/espeak.ts'
 import { applySettings, DEFAULT_SETTINGS, PRESETS, type VoiceSettings } from '../src/voice-settings.ts'
@@ -49,7 +49,7 @@ const VERSIONS: Array<[string, string, Speech]> = [
   ['2-espeak-ng', 'Deux. eSpeak.', espeakSpeech(worker, 'fr', text)],
   ['3-piper', 'Trois. Piper.', piperVoice],
   ['4-piper-robot', 'Quatre. Piper dans le vocodeur.', {
-    samples: robotize(piperVoice, { mix: 1, frequency: kraftwerk.frequency, chord: kraftwerk.chord }),
+    samples: robotize(piperVoice, robotSettings(kraftwerk)),
     sampleRate: piper.sampleRate,
   }],
   ['5-waxvocoder-kraftwerk', 'Cinq. WaxVocoder, robot Kraftwerk.', waxvocoder(kraftwerk)],

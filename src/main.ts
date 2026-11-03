@@ -7,7 +7,7 @@ import initWasm, { VoiceEngine } from './wasm/voice-engine/voice_engine.js'
 import { encodeWav } from './audio/wav'
 import { loadDictionary } from './dictionary'
 import { BufferPlayer, synthesize } from './engines/browser'
-import { type EngineName, ENGINES, PIPER_VOICES, type Speech } from './engines/index'
+import { type EngineName, ENGINES, PIPER_VOICES, robotSettings, type Speech } from './engines/index'
 import { type EspeakTranscriber, loadEspeak } from './espeak'
 import { ESPEAK_LANGUAGES, type Language } from './ipa'
 import { type Lexicon, transcribe, unknownPhonemeTokens } from './phonemes'
@@ -156,7 +156,7 @@ function sendPhonemes(): void {
 
 const player = new BufferPlayer()
 const currentEngine = () => engineControl.value as EngineName
-const ENGINE_HELP = 'Avec ce moteur, seuls comptent le texte, la langue, le vocoder (0 = voix telle quelle), sa hauteur et son accord ; les autres réglages concernent WaxVocoder.'
+const ENGINE_HELP = 'Avec ce moteur, l’étage robot applique le vocoder (hauteur, porteuse, mélodie à une note par syllabe), le lo-fi, la taille et le vibrato ; débit, intonation, tempo, présence et glissando concernent WaxVocoder.'
 
 function updateEngineHint(): void {
   const engine = currentEngine()
@@ -176,11 +176,7 @@ async function otherEngineSpeech(): Promise<Speech> {
   // The robot stage runs WaxVocoder's vocoder here, on the page (the voice itself runs in the AudioWorklet).
   await initWasm({ module_or_path: await compileWasm() })
   const transcriber = await loadTranscriber()
-  return synthesize(engine, phraseControl.value, currentLanguage(), transcriber, {
-    mix: settings.vocoder,
-    frequency: settings.frequency,
-    chord: settings.chord,
-  }, (fraction) => { status.textContent = `Téléchargement de la voix Piper : ${Math.round(fraction * 100)} %` })
+  return synthesize(engine, phraseControl.value, currentLanguage(), transcriber, robotSettings(settings), (fraction) => { status.textContent = `Téléchargement de la voix Piper : ${Math.round(fraction * 100)} %` })
 }
 
 function currentLanguage(): Language {

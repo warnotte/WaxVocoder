@@ -1,0 +1,8 @@
+node_modules/
+dist/
+target/
+src/wasm/voice-engine/
+*.log
+ecoute/
+.tmp-agent/
+*.tsbuildinfo

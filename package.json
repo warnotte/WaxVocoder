@@ -1,0 +1,29 @@
+{
+  "name": "wax-vocoder",
+  "private": true,
+  "version": "0.2.0",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test": "npm run build:wasm && npm run test:rust && npm run test:ts",
+    "test:ts": "node --test \"tests/**/*.test.ts\"",
+    "test:rust": "cargo test --manifest-path crates/voice-engine/Cargo.toml",
+    "preview": "vite preview",
+    "build:wasm": "wasm-pack build crates/voice-engine --target web --out-dir ../../src/wasm/voice-engine --out-name voice_engine",
+    "render": "node scripts/render-phrase.ts",
+    "vocode": "node scripts/vocode-file.ts",
+    "demo": "node scripts/demo-song.ts"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
+  },
+  "dependencies": {
+    "@echogarden/espeak-ng-emscripten": "0.3.5"
+  }
+}

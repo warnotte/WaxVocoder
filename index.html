@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111318" />
+    <meta name="description" content="Instrument vocal électronique expérimental." />
+    <title>Wax Vocoder — laboratoire vocal</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="masthead">
+        <p class="eyebrow">Instrument vocal expérimental</p>
+        <h1>Wax Vocoder</h1>
+        <p class="intro">Voix électronique à formants, vocoder et effets de robot, pilotés par des phonèmes.</p>
+      </header>
+
+      <section class="workbench" aria-labelledby="phrase-title">
+        <div class="section-header">
+          <label id="phrase-title" class="field-title" for="phrase">Texte (anglais)</label>
+          <label class="select-control" for="language">
+            Langue
+            <select id="language"></select>
+          </label>
+        </div>
+        <textarea id="phrase" rows="2" maxlength="240">Hello, I am a talking machine.</textarea>
+        <label class="phoneme-label" for="phonemes">Phonèmes générés — modifiables</label>
+        <textarea id="phonemes" rows="3" spellcheck="false">HH AH0 L OW1 , AY1 | AE1 M | AH0 | T AO1 K IH0 NG | M AH0 SH IY1 N .</textarea>
+        <p id="phoneme-hint" class="hint"></p>
+        <label class="checkbox" for="natural-rhythm" title="Chaque phonème garde la durée que lui donne eSpeak NG : le débit et les accents de la langue. Sans effet en anglais ou si les phonèmes sont modifiés à la main.">
+          <input id="natural-rhythm" type="checkbox" checked disabled /> Rythme naturel de la langue (eSpeak NG)
+        </label>
+        <div class="controls">
+          <div class="sliders">
+            <label class="slider-control" for="pitch">
+              Hauteur <output id="pitch-value" for="pitch">110 Hz</output>
+              <input id="pitch" type="range" min="45" max="300" value="110" />
+            </label>
+            <label class="slider-control" for="rate">
+              Débit <output id="rate-value" for="rate">× 1.00</output>
+              <input id="rate" type="range" min="0.5" max="1.6" step="0.05" value="1" />
+            </label>
+            <label class="slider-control" for="intonation">
+              Intonation <output id="intonation-value" for="intonation">60 %</output>
+              <input id="intonation" type="range" min="0" max="1" step="0.05" value="0.6" />
+            </label>
+            <label class="slider-control" for="presence">
+              Présence <output id="presence-value" for="presence">50 %</output>
+              <input id="presence" type="range" min="0" max="1" step="0.05" value="0.5" />
+            </label>
+          </div>
+          <div class="actions">
+            <button id="export" type="button" class="secondary">Exporter WAV</button>
+            <button id="play" type="button">Lire la phrase</button>
+          </div>
+        </div>
+        <p id="status" class="status" role="status">Chargement du dictionnaire de prononciation…</p>
+      </section>
+
+      <section class="workbench robot" aria-labelledby="robot-title">
+        <div class="section-header">
+          <h2 id="robot-title">Robot et effets</h2>
+          <label class="select-control" for="preset">
+            Préréglage
+            <select id="preset"></select>
+          </label>
+        </div>
+        <div class="sliders">
+          <label class="slider-control" for="vocoder">
+            Vocoder <output id="vocoder-value" for="vocoder">0 %</output>
+            <input id="vocoder" type="range" min="0" max="1" step="0.05" value="0" />
+          </label>
+          <label class="select-control" for="chord">
+            Porteuse
+            <select id="chord"></select>
+          </label>
+          <label class="slider-control" for="tempo">
+            Tempo robot <output id="tempo-value" for="tempo">libre</output>
+            <input id="tempo" type="range" min="0" max="200" step="2" value="0" />
+          </label>
+          <label class="slider-control" for="lofi">
+            Jouet 1980 <output id="lofi-value" for="lofi">0 %</output>
+            <input id="lofi" type="range" min="0" max="1" step="0.05" value="0" />
+          </label>
+          <label class="slider-control" for="formant-shift">
+            Taille <output id="formant-shift-value" for="formant-shift">normale</output>
+            <input id="formant-shift" type="range" min="0.6" max="1.6" step="0.02" value="1" />
+          </label>
+          <label class="slider-control" for="vibrato">
+            Vibrato <output id="vibrato-value" for="vibrato">0.0 demi-ton</output>
+            <input id="vibrato" type="range" min="0" max="3" step="0.1" value="0" />
+          </label>
+          <label class="slider-control" for="glide">
+            Glissando <output id="glide-value" for="glide">0 ms</output>
+            <input id="glide" type="range" min="0" max="0.4" step="0.01" value="0" />
+          </label>
+        </div>
+        <div class="melody-row">
+          <label class="melody-label" for="melody">Mélodie (une note par voyelle)</label>
+          <input id="melody" type="text" spellcheck="false" placeholder="ex. C3 C3 D#3 G2 ou do2 do2 ré#2 sol1" />
+          <label class="checkbox" for="quantize"><input id="quantize" type="checkbox" /> Notes justes</label>
+        </div>
+        <p id="melody-hint" class="hint"></p>
+      </section>
+
+      <footer>Synthèse à formants et vocoder · Rust / WebAssembly / AudioWorklet · GPL-3.0-or-later · Prononciations : CMU Pronouncing Dictionary (licence de type BSD, voir <code>src/data/CMUDICT_LICENSE.txt</code>)</footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

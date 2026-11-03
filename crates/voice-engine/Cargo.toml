@@ -1,0 +1,16 @@
+[package]
+name = "voice-engine"
+version = "0.2.0"
+edition = "2024"
+description = "Platform-independent vocal synthesis DSP core"
+license = "GPL-3.0-or-later"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["wasm"]
+wasm = ["dep:wasm-bindgen"]
+
+[dependencies]
+wasm-bindgen = { version = "=0.2.129", optional = true }

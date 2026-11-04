@@ -21,7 +21,7 @@ import { isVowelSymbol, stripDurations, transcribe } from '../src/phonemes.ts'
 import { applySettings, DEFAULT_SETTINGS, noteFrequency, PRESETS, type VoiceSettings } from '../src/voice-settings.ts'
 
 const SR = 44_100
-const BPM = 132
+const BPM = 112
 const BEAT = 60 / BPM
 const BAR = 4 * BEAT
 const outputDirectory = process.argv[2] ?? 'ecoute/datenherz'
@@ -48,16 +48,17 @@ function chord(name: string) {
 }
 
 type Section = 'intro' | 'verse' | 'pre' | 'chorus' | 'bridge' | 'final' | 'outro'
-const VERSE = ['Dm', 'Dm', 'Bb', 'Bb', 'F', 'F', 'C', 'C']
+const VERSE = ['Dm', 'Am', 'Bb', 'C', 'Dm', 'Am', 'Bb', 'C']
 const CHORUS = ['F', 'F', 'C', 'C', 'Dm', 'Dm', 'Bb', 'C']
 const FORM: Array<[Section, string[]]> = [
-  ['intro', ['Dm', 'Dm', 'Bb', 'C']],
+  ['intro', ['Dm', 'Bb', 'F', 'C']],
   ['verse', VERSE],
   ['chorus', CHORUS],
+  ['bridge', ['Dm', 'Bb', 'F', 'C']],
   ['verse', VERSE],
   ['verse', VERSE],
   ['final', ['G', 'G', 'D', 'D', 'Em', 'Em', 'C', 'D']],
-  ['outro', ['Em', 'Em', 'Em', 'Em']],
+  ['outro', ['Em', 'C', 'G', 'D']],
 ]
 const BAR_MAP = FORM.flatMap(([section, chords]) => chords.map((name) => ({ section, chord: chord(name) })))
 const BARS = BAR_MAP.length
@@ -110,30 +111,37 @@ const TOM = 'fr_FR-tom-medium'
 
 const LYRICS: Line[] = [
   { bar: 0, segments: [['de', 'Verbindung hergestellt.']], voice: robot('D3'), legato: true },
-  { bar: 2, segments: [['fr', 'Bonjour, humain.']], voice: TOY_VOICE },
   // Couplet allemand.
   sung(4, 'de', 'Strom fließt durch mein Herz aus Glas.', THORSTEN, 'D3 D3 F3 A3 G3 F3 E3 D3'),
   sung(6, 'de', 'Ich zähle Sterne, Bit für Bit.', THORSTEN, 'D3 F3 A3 A3 G3 F3 E3 D3'),
   sung(8, 'de', 'Die Stadt schläft, nur mein Bildschirm wacht.', THORSTEN, 'F3 F3 A3 C4 A3 G3 F3 E3'),
   sung(10, 'de', 'Er schickt sein Licht zu dir.', THORSTEN, 'E3 E3 G3 E3 D3 C3'),
   ...chorus(12),
+  // Interlude : le motif seul (mesures 20 à 23).
   // Couplet anglais.
-  sung(20, 'en', 'My heart is made of silicon light.', JOE, 'D3 D3 F3 A3 G3 F3 E3 D3'),
-  sung(22, 'en', 'I learned to dream in ones and zeros.', JOE, 'D3 F3 A3 A3 G3 F3 E3 D3'),
-  sung(24, 'en', 'Through cables humming in the night,', JOE, 'F3 F3 A3 C4 A3 G3 F3 E3'),
-  sung(26, 'en', 'my signal finds your window.', JOE, 'E3 E3 G3 E3 D3 C3'),
-  // Couplet français, avec un clin d'œil à Kaos.
-  sung(28, 'fr', 'J’ai appris ton nom en binaire.', TOM, 'D3 D3 F3 A3 G3 F3 E3 D3'),
-  sung(30, 'fr', 'Mon cœur clignote dans la nuit.', TOM, 'D3 F3 A3 A3 G3 F3 E3 D3'),
-  sung(32, 'fr', 'Kaos apporte une lettre de lumière,', TOM, 'F3 F3 A3 C4 A3 G3 F3 E3'),
-  sung(34, 'fr', 'et la machine sourit.', TOM, 'E3 E3 G3 E3 D3 C3'),
-  ...chorus(36, 2),
-  { bar: 44, segments: [['fr', 'Fin de transmission.']], voice: robot('E3'), legato: true },
-  { bar: 46, segments: [['de', 'Datenherz.']], voice: robot('B2'), legato: true },
+  sung(24, 'en', 'My heart is made of silicon light.', JOE, 'D3 D3 F3 A3 G3 F3 E3 D3'),
+  sung(26, 'en', 'I learned to dream in ones and zeros.', JOE, 'D3 F3 A3 A3 G3 F3 E3 D3'),
+  sung(28, 'en', 'Through cables humming in the night,', JOE, 'F3 F3 A3 C4 A3 G3 F3 E3'),
+  sung(30, 'en', 'my signal finds your window.', JOE, 'E3 E3 G3 E3 D3 C3'),
+  // Couplet français.
+  sung(32, 'fr', 'J’ai appris ton nom en binaire.', TOM, 'D3 D3 F3 A3 G3 F3 E3 D3'),
+  sung(34, 'fr', 'Mon cœur clignote dans la nuit.', TOM, 'D3 F3 A3 A3 G3 F3 E3 D3'),
+  sung(36, 'fr', 'Une lettre de lumière traverse la ville,', TOM, 'F3 F3 A3 C4 A3 G3 F3 E3'),
+  sung(38, 'fr', 'et la machine sourit.', TOM, 'E3 E3 G3 E3 D3 C3'),
+  ...chorus(40, 2),
+  { bar: 50, segments: [['fr', 'Fin de transmission.']], voice: robot('E3'), legato: true },
 ]
 
-/** Riff d'introduction (original), en croches sur deux mesures, en ré mineur. */
-const RIFF = 'D4 F4 A4 D5 C5 A4 F4 A4 D4 F4 A4 C5 A#4 A4 G4 F4'
+/**
+ * Le motif (original) : quatre mesures lyriques, en ré mineur, notes et durées
+ * en croches. Joué en introduction, en interlude et en fin, un ton plus haut à la fin.
+ */
+const HOOK: Array<[string, number]> = [
+  ['A4', 2], ['F4', 1], ['G4', 1], ['A4', 2], ['C5', 2],
+  ['A#4', 4], ['A4', 2], ['G4', 2],
+  ['F4', 2], ['E4', 1], ['F4', 1], ['G4', 2], ['A4', 2],
+  ['D4', 6], ['', 2],
+]
 
 // ─── Synthèse ─────────────────────────────────────────────────────────────
 
@@ -187,41 +195,68 @@ class Track {
 
 const seconds = (duration: number) => new Float32Array(Math.ceil(duration * SR))
 
+/** Grosse caisse de boîte à rythmes analogique : courte, sans grondement. */
 function kick(): Float32Array {
-  const out = seconds(0.5)
-  const click = new Filter()
+  const out = seconds(0.3)
   let phase = 0
   out.forEach((_, index) => {
     const time = index / SR
-    phase += (48 + 112 * Math.exp(-time / 0.03)) / SR
-    const body = Math.sin(2 * Math.PI * phase) * Math.exp(-time / 0.22)
-    const attack = click.process(noise(), 3_000, 0.3, 'high') * Math.exp(-time / 0.004) * 0.7
-    out[index] = drive(body + attack, 1.8)
+    phase += (52 + 120 * Math.exp(-time / 0.012)) / SR
+    out[index] = drive(Math.sin(2 * Math.PI * phase) * Math.exp(-time / 0.11), 1.4)
   })
   return out
 }
 
+/** Caisse claire « bruit » : une rafale filtrée et un ton bref. */
 function snare(): Float32Array {
-  const out = seconds(0.35)
+  const out = seconds(0.25)
   const band = new Filter()
-  const high = new Filter()
   out.forEach((_, index) => {
     const time = index / SR
-    const bursts = [0, 0.011, 0.022].reduce((sum, onset) =>
-      sum + (time >= onset ? Math.exp(-(time - onset) / (onset < 0.02 ? 0.006 : 0.1)) : 0), 0)
-    const clap = band.process(noise() * bursts, 1_300, 0.4, 'band') * 1.5
-    const body = Math.sin(2 * Math.PI * 185 * time) * Math.exp(-time / 0.07) * 0.6
-    const sizzle = high.process(noise(), 5_000, 0.2, 'high') * Math.exp(-time / 0.12) * 0.35
-    out[index] = drive(clap + body + sizzle, 1.4)
+    const hiss = band.process(noise(), 2_200, 0.35, 'band') * Math.exp(-time / 0.05) * 1.6
+    const tone = Math.sin(2 * Math.PI * 225 * time) * Math.exp(-time / 0.03) * 0.5
+    out[index] = drive(hiss + tone, 1.3)
   })
   return out
 }
 
+/** Clap : trois rafales rapprochées puis une queue. */
+function clap(): Float32Array {
+  const out = seconds(0.3)
+  const band = new Filter()
+  out.forEach((_, index) => {
+    const time = index / SR
+    const bursts = [0, 0.009, 0.018].reduce((sum, onset) => sum + (time >= onset ? Math.exp(-(time - onset) / (onset < 0.018 ? 0.004 : 0.09)) : 0), 0)
+    out[index] = band.process(noise() * bursts, 1_100, 0.45, 'band') * 1.4
+  })
+  return out
+}
+
+/** Charleston métallique : six oscillateurs carrés inharmoniques, filtrés vers le haut. */
 function hat(length: number): Float32Array {
   const out = seconds(length * 4)
   const filter = new Filter()
+  const ratios = [263, 400, 421, 474, 587, 845]
+  const phases = ratios.map(() => 0)
   out.forEach((_, index) => {
-    out[index] = filter.process(noise(), 8_000, 0.2, 'high') * Math.exp(-index / SR / length) * 0.5
+    let sum = 0
+    ratios.forEach((frequency, voice) => {
+      phases[voice] = (phases[voice] + frequency * 1.9 / SR) % 1
+      sum += phases[voice] < 0.5 ? 1 : -1
+    })
+    out[index] = filter.process(sum / ratios.length, 7_500, 0.3, 'high') * Math.exp(-index / SR / length) * 0.7
+  })
+  return out
+}
+
+/** Tom électronique : un sinus qui descend. */
+function tom(frequency: number): Float32Array {
+  const out = seconds(0.35)
+  let phase = 0
+  out.forEach((_, index) => {
+    const time = index / SR
+    phase += frequency * (1 + 0.6 * Math.exp(-time / 0.05)) / SR
+    out[index] = Math.sin(2 * Math.PI * phase) * Math.exp(-time / 0.16) * 0.9
   })
   return out
 }
@@ -245,52 +280,56 @@ function riser(length: number): Float32Array {
   return out
 }
 
-function saw(frequency: number, length: number, cutoff: (time: number) => number, resonance: number,
-  release: number, saturation: number, detune = 0): Float32Array {
-  const out = seconds(length + release * 5)
-  const filter = new Filter()
-  const steps = detune ? [frequency * (1 - detune), frequency * (1 + detune)] : [frequency]
-  const phases = steps.map((_, index) => index * 0.31)
-  out.forEach((_, index) => {
-    const time = index / SR
-    let sum = 0
-    steps.forEach((step, voice) => {
-      const increment = step / SR
-      phases[voice] = (phases[voice] + increment) % 1
-      sum += 2 * phases[voice] - 1 - blep(phases[voice], increment)
-    })
-    const gate = time < length ? Math.min(1, time / 0.003) : Math.exp(-(time - length) / release)
-    out[index] = drive(filter.process(sum / steps.length, cutoff(time), resonance, 'low'), saturation) * gate
-  })
-  return out
-}
-
-/** Basse « acide » : filtre résonant à enveloppe, saturée. */
-const bassNote = (frequency: number, length: number, accent: boolean) =>
-  saw(frequency, length, (time) => 160 + (accent ? 2_600 : 1_500) * Math.exp(-time / 0.08), 0.78, 0.01, 2.2)
-
-const leadNote = (frequency: number, length: number) =>
-  saw(frequency, length, (time) => 1_000 + 3_000 * Math.exp(-time / 0.12), 0.5, 0.05, 1.6, 0.0045)
-
-function arpNote(frequency: number): Float32Array {
-  const out = seconds(0.18)
+/** Basse séquencée : impulsion étroite, courte, filtre qui se referme vite. */
+function bassNote(frequency: number, length: number): Float32Array {
+  const out = seconds(length + 0.05)
   const filter = new Filter()
   let phase = 0
   out.forEach((_, index) => {
     const time = index / SR
     const step = frequency / SR
     phase = (phase + step) % 1
-    const square = (phase < 0.5 ? 1 : -1) + blep(phase, step) - blep((phase + 0.5) % 1, step)
-    out[index] = drive(filter.process(square, 3_200, 0.3, 'low'), 1.3) * Math.exp(-time / 0.06)
+    const pulse = (phase < 0.3 ? 1 : -1) + blep(phase, step) - blep((phase + 0.7) % 1, step)
+    const gate = time < length ? 1 : Math.exp(-(time - length) / 0.01)
+    out[index] = drive(filter.process(pulse, 220 + 1_400 * Math.exp(-time / 0.05), 0.35, 'low'), 1.6) * gate
   })
   return out
 }
 
-function padChord(tones: number[], length: number): Float32Array {
-  const out = seconds(length + 0.6)
+/** Le synthé du motif : onde carrée douce, vibrato qui arrive après l'attaque, comme un verre qui chante. */
+function glassNote(frequency: number, length: number): Float32Array {
+  const out = seconds(length + 0.35)
   const filter = new Filter()
-  const voices = tones.flatMap((tone, index) => [-0.005, 0.005].map((detune) => ({
-    step: tone * (1 + detune) / SR, phase: (index * 0.37 + detune * 50) % 1,
+  let phase = 0
+  out.forEach((_, index) => {
+    const time = index / SR
+    const vibrato = 1 + 0.006 * Math.min(1, time / 0.35) * Math.sin(2 * Math.PI * 5.2 * time)
+    const step = frequency * vibrato / SR
+    phase = (phase + step) % 1
+    const square = (phase < 0.5 ? 1 : -1) + blep(phase, step) - blep((phase + 0.5) % 1, step)
+    const envelope = Math.min(1, time / 0.02) * (time < length ? 0.85 + 0.15 * Math.exp(-time / 0.2) : Math.exp(-(time - length) / 0.12))
+    out[index] = filter.process(square, 2_600, 0.2, 'low') * envelope
+  })
+  return out
+}
+
+/** Cloche : sinus modulé en fréquence (rapport 3,5), pour les contretemps du refrain. */
+function bell(frequency: number): Float32Array {
+  const out = seconds(0.9)
+  out.forEach((_, index) => {
+    const time = index / SR
+    const modulator = Math.sin(2 * Math.PI * frequency * 3.5 * time) * 2.2 * Math.exp(-time / 0.25)
+    out[index] = Math.sin(2 * Math.PI * frequency * time + modulator) * Math.exp(-time / 0.45) * 0.6
+  })
+  return out
+}
+
+/** Nappe façon machine à cordes : attaque lente, chœur de scies légèrement désaccordées. */
+function padChord(tones: number[], length: number): Float32Array {
+  const out = seconds(length + 0.8)
+  const filter = new Filter()
+  const voices = tones.flatMap((tone, index) => [-0.006, 0, 0.006].map((detune) => ({
+    step: tone * (1 + detune) / SR, phase: (index * 0.37 + detune * 70 + 0.5) % 1,
   })))
   out.forEach((_, index) => {
     const time = index / SR
@@ -299,8 +338,8 @@ function padChord(tones: number[], length: number): Float32Array {
       voice.phase = (voice.phase + voice.step) % 1
       sum += 2 * voice.phase - 1 - blep(voice.phase, voice.step)
     }
-    const envelope = Math.min(1, time / 0.3) * (time < length ? 1 : Math.exp(-(time - length) / 0.25))
-    out[index] = filter.process(sum / voices.length, 1_600, 0.15, 'low') * envelope
+    const envelope = Math.min(1, time / 0.6) * (time < length ? 1 : Math.exp(-(time - length) / 0.4))
+    out[index] = filter.process(sum / voices.length, 1_300, 0.1, 'low') * envelope
   })
   return out
 }
@@ -311,69 +350,73 @@ function arrange(): { drums: Track; music: Track; kicks: number[] } {
   const drums = new Track()
   const music = new Track()
   const kicks: number[] = []
-  const [kickSound, snareSound, closedHat, openHat, crashSound] = [kick(), snare(), hat(0.03), hat(0.16), crash()]
-  const riff = RIFF.split(' ')
+  const [kickSound, snareSound, clapSound, closedHat, openHat, crashSound] = [kick(), snare(), clap(), hat(0.025), hat(0.12), crash()]
+  const toms = [tom(170), tom(130), tom(100), tom(80)]
+  // Grosse caisse sur 1, 3 et le « et » de 3 ; caisse claire sur 2 et 4.
+  const KICKS = [0, 8, 10]
+  const ACCENTS = [1, 0.45, 0.75, 0.45]
+  const SIXTEENTH = BEAT / 4
+  const hookFrom = (start: number, shift: number, gain: number) => {
+    let eighth = 0
+    for (const [note, length] of HOOK) {
+      if (note) music.add(glassNote(hz(transpose(note, shift)), length * BEAT / 2 * 0.92), start + eighth * BEAT / 2, gain, 0.1)
+      eighth += length
+    }
+  }
   for (let bar = 0; bar < BARS; bar += 1) {
     const { section, chord: current } = BAR_MAP[bar]
-    const next = BAR_MAP[bar + 1]?.section
+    const nextSection = BAR_MAP[bar + 1]?.section
     const start = bar * BAR
-    const full = isChorus(section)
-    const halfTime = section === 'bridge' && bar % 8 < 4
-    for (let beat = 0; beat < 4; beat += 1) {
-      const time = start + beat * BEAT
-      const kickHere = section === 'outro' && bar === BARS - 1 ? beat === 0
-        : halfTime ? beat === 0 || (beat === 2 && bar % 2 === 1)
-          : true
-      if (kickHere) { drums.add(kickSound, time, 0.95); kicks.push(time) }
-      const snareHere = halfTime ? beat === 2 : section !== 'intro' && (beat === 1 || beat === 3)
-      if (snareHere) drums.add(snareSound, time, 0.55, -0.08)
-    }
-    // Charleston : doubles croches accentuées sur les refrains, croches ailleurs.
-    const sixteenths = full || section === 'pre' ? 16 : 8
-    for (let step = 0; step < sixteenths; step += 1) {
-      const time = start + step * BAR / sixteenths
-      const offbeat = sixteenths === 16 ? step % 4 === 2 : step % 2 === 1
-      if (full && offbeat) drums.add(openHat, time, 0.26, 0.35)
-      else drums.add(closedHat, time, offbeat ? 0.3 : step % 2 === 0 ? 0.22 : 0.14, 0.35)
-    }
-    // Basse acide en doubles croches (croches sur les couplets, rondes en début de pont).
-    if (bar >= 2 && !(section === 'outro' && bar === BARS - 1)) {
-      if (halfTime) {
-        music.add(bassNote(current.bass, BAR * 0.9, true), start, 0.34)
-      } else {
-        const steps = section === 'verse' ? 8 : 16
-        const pattern = steps === 16 ? [1, 1, 2, 1, 1, 2, 1, 1.5] : [1, 1, 2, 1, 1, 2, 1, 1.5]
-        for (let step = 0; step < steps; step += 1) {
-          const length = BAR / steps
-          music.add(bassNote(current.bass * pattern[step % pattern.length], length * 0.65, step % 4 === 0), start + step * length, 0.34)
+    const chorusBar = isChorus(section)
+    const last = bar === BARS - 1
+    const sectionEnd = nextSection !== section
+    // Boîte à rythmes : rien sur les deux premières mesures de l'intro.
+    if (!(section === 'intro' && bar < 2) && !last) {
+      for (let step = 0; step < 16; step += 1) {
+        const time = start + step * SIXTEENTH
+        const fill = sectionEnd && step >= 12
+        if (fill) {
+          drums.add(toms[step - 12], time, 0.55, (step - 13.5) * 0.25)
+          continue
         }
+        if (KICKS.includes(step)) { drums.add(kickSound, time, 0.9); kicks.push(time) }
+        if (step === 4 || step === 12) {
+          drums.add(snareSound, time, 0.5, -0.05)
+          if (chorusBar) drums.add(clapSound, time, 0.35, 0.1)
+        }
+        const hatStep = section === 'verse' || section === 'intro' ? step % 2 === 0 : true
+        if (hatStep) drums.add(step === 14 && chorusBar ? openHat : closedHat, time, 0.22 * ACCENTS[step % 4], 0.3)
       }
     }
-    if (section === 'pre' || full || section === 'bridge' || (section === 'outro' && bar === BARS - 4)) {
-      const length = section === 'outro' ? 3 * BAR : BAR
-      music.add(padChord(current.tones, length), start, 0.12, -0.35)
-      music.add(padChord(current.tones.map((tone) => tone * 1.003), length), start, 0.12, 0.35)
-    }
-    if (full) {
-      const notes = [...current.tones, current.tones[1]].map((tone) => tone * 2)
-      for (let sixteenth = 0; sixteenth < 16; sixteenth += 1) {
-        music.add(arpNote(notes[sixteenth % notes.length]), start + sixteenth * BEAT / 4, 0.07, sixteenth % 2 === 0 ? -0.6 : 0.6)
-      }
-    }
-    // Riff : introduction, pont (en ré mineur et mi) et dernier refrain un ton plus haut.
-    const riffShift = section === 'intro' ? 0 : section === 'final' || section === 'outro' ? 2 : undefined
-    if (riffShift !== undefined && bar < BARS - 1) {
+    // Basse séquencée : note et octave en croches, dès la troisième mesure.
+    if (bar >= 2 && !last) {
       for (let eighth = 0; eighth < 8; eighth += 1) {
-        const note = transpose(riff[(bar % 2) * 8 + eighth], riffShift)
-        music.add(leadNote(hz(note), BEAT / 2 * 0.8), start + eighth * BEAT / 2, section === 'final' ? 0.08 : 0.16, 0.15)
+        const frequency = current.bass * (eighth % 2 === 1 ? 2 : 1)
+        music.add(bassNote(frequency, BEAT / 2 * 0.6), start + eighth * BEAT / 2, 0.32)
       }
     }
+    // Nappe : refrains, interlude et fin.
+    if (chorusBar || section === 'bridge' || section === 'outro') {
+      music.add(padChord(current.tones, BAR), start, 0.1, -0.4)
+      music.add(padChord(current.tones.map((tone) => tone * 1.002), BAR), start, 0.1, 0.4)
+    }
+    // Cloches sur les contretemps du refrain.
+    if (chorusBar) {
+      current.tones.concat(current.tones[0] * 2).forEach((tone, index) => {
+        music.add(bell(tone * 2), start + (index * 2 + 1) * BEAT / 2, 0.07, index % 2 === 0 ? -0.55 : 0.55)
+      })
+    }
+    // Le motif : introduction, interlude, fin (un ton plus haut avec le dernier refrain).
+    const firstOfSection = BAR_MAP[bar - 1]?.section !== section
+    if (firstOfSection && section === 'intro') hookFrom(start, 0, 0.2)
+    if (firstOfSection && section === 'bridge') hookFrom(start, 0, 0.22)
+    if (firstOfSection && section === 'outro') hookFrom(start, 2, 0.2)
     // Montée de bruit avant chaque refrain, cymbale à son arrivée.
-    if (next !== undefined && isChorus(next) && !isChorus(section)) drums.add(riser(BAR), start, 0.5)
-    if (full && BAR_MAP[bar - 1]?.section !== section) drums.add(crashSound, start, 0.45, 0.2)
+    if (nextSection !== undefined && isChorus(nextSection) && !chorusBar) drums.add(riser(BAR), start, 0.35)
+    if (chorusBar && firstOfSection) drums.add(crashSound, start, 0.35, 0.2)
   }
-  drums.add(kickSound, BARS * BAR, 0.95)
-  drums.add(crashSound, BARS * BAR, 0.4)
+  drums.add(kickSound, BARS * BAR, 0.9)
+  drums.add(crashSound, BARS * BAR, 0.3)
   return { drums, music, kicks }
 }
 

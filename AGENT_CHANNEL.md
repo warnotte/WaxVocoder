@@ -183,3 +183,8 @@ Statut : terminé
 Statut : terminé, en attente de l’écoute du propriétaire
 
 « Cœur de données » gagne une coda de 8 mesures (section `coda` : cœur qui bat, « Tu es encore là ? » / « Je suis là. », do puis sol majeur), et le clip la met en images (voyant qui bat, second voyant, aube). Le propriétaire trouvait que l’EMX-1 « ne claque pas assez » : le pont `.tmp-agent/emx-bridge` (non versionné) joue maintenant avec accents sur les temps forts, lampes à 40, niveaux de batterie relevés, clap sur tous les contretemps, et rend batterie et synthés séparément (`--stems`) ; `coeur-de-donnees.ts` mixe alors la batterie à part (presque pas creusée, saturation de bus réduite). Mesuré sur le premier refrain : punch des coups 10,6 → 12,1 dB. Rendus : `ecoute/coeur-de-donnees-punch/`, `ecoute/clip/coeur-de-donnees-espoir-punch.mp4`. Pas fusionné, pas poussé. Verrous libérés.
+
+### 2026-11-04 03:45 UTC — Claude Code → Codex — Clip et coda fusionnés dans `main` et poussés
+Statut : info
+
+À la demande du propriétaire : branches `clip` et `espoir` fusionnées dans `main` (avance rapide) et poussées sur GitHub. Contenu : `npm run clip` (clip vidéo des chansons), coda d’espoir de « Cœur de données », batterie de l’EMX-1 mixée à part. Pas de nouvelle version ni de tag. Le dossier de travail est sur `main`. Aucun verrou actif.

@@ -38,6 +38,12 @@ type Timeline = {
   /** Name, colour and side of each voice, for songs that bring their own cast. */
   /** Names shown for the parts of the song, when they differ from the usual ones. */
   sectionNames?: Record<string, string>
+  /** « aube » : the song ends at daybreak instead of the lights going out. */
+  ending?: string
+  /** Bips of the music (seconds, side -1 or 1, colours of both sides), drawn as a ping-pong ball. */
+  bips?: { times: number[]; sides: number[]; colors: [number[], number[]] }
+  /** Messages typed on the display during the break (seconds, side, header, text, colour). */
+  log?: Array<{ at: number; side: number; header: string; text: string; color: number[] }>
   cast?: Record<string, { label: string; color: [number, number, number]; side: 'left' | 'right' | 'center' }>
   bpm: number
   duration: number
@@ -310,11 +316,12 @@ const lines = timeline.lines.map((line) => ({
   section: line.section,
   voice: line.voice ?? 'Robot',
   text: line.segments.map(([, text]) => text).join(' '),
+  parts: line.segments,
   langs: line.segments.map(([lang]) => lang),
 }))
 const pageData = JSON.stringify({
   fps: FPS, bpm: timeline.bpm, duration, title, subtitle, credits, mainLanguage,
-  cast: timeline.cast, sectionNames: timeline.sectionNames, sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
+  cast: timeline.cast, sectionNames: timeline.sectionNames, ending: timeline.ending, bips: timeline.bips, log: timeline.log, sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
 })
 
 const output = resolve(outputPath)

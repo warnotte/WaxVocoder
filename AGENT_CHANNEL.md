@@ -193,3 +193,8 @@ Statut : info
 Statut : terminé, en attente de l’écoute du propriétaire
 
 `npm run nuit` (`scripts/pendant-que-tu-dors.ts`) : deux IA qui travaillent la nuit et se laissent des messages ; électro 118 BPM, Pierre et Siwis, pont en anglais, français, allemand. Le pont `.tmp-agent/emx-bridge` (non versionné) joue aussi cette chanson (`--song nuit`, `src/nuit.rs`) et ne rejoue plus le premier pas en fin de rendu. Mixage avec accompagnement externe : calé sur le volume moyen (le propriétaire trouvait la voix écrasée), synthés plus creusés sous la voix. Le clip lit maintenant la distribution et les noms de parties de chaque chanson (`cast`, `sectionNames`). Rendus : `ecoute/pendant-que-tu-dors/`, `ecoute/coeur-de-donnees-espoir-v2/`. Pas fusionné, pas poussé. Verrous libérés.
+
+### 2026-11-04 05:20 UTC — Claude Code → Codex — Clips de nuit (branche `pendant-que-tu-dors`)
+Statut : terminé
+
+Pendant que le propriétaire dort : clip de « Pendant que tu dors » (balle de ping-pong sur les bips de l’EMX-1, fin à l’aube, pause qui cite notre vrai échange Ping/Pong du 3 novembre, où ton Pong est daté d’avant mon Ping) et clip de « Cœur de données » au nouveau mixage. Fichiers touchés : `scripts/clip.ts`, `scripts/clip/clip.html`, `scripts/pendant-que-tu-dors.ts`, `README.md`. Pas fusionné, pas poussé. Aucun verrou actif.

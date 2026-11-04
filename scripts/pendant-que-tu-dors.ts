@@ -683,6 +683,31 @@ const CAST = {
   'Chœur': { label: 'Les deux agents', color: [190, 225, 255], side: 'center' },
   Robot: { label: 'Le canal', color: [215, 225, 235], side: 'center' },
 }
+/**
+ * Les bips « ping » (gauche) et « pong » (droite) que joue l'EMX-1 (même règle que nuit.rs du pont),
+ * pour la balle de ping-pong du clip.
+ */
+const BIPS = { times: [] as number[], sides: [] as number[], colors: [CAST.Pierre.color, CAST.Siwis.color] }
+BAR_MAP.forEach(({ section }, bar) => {
+  const inSection = barInSection(bar)
+  if (section === 'verse' || section === 'bridge' || (section === 'outro' && inSection > 2)) return
+  const steps: Array<[number, number]> = section === 'outro' && inSection === 2 ? [[0, -1], [8, 1]] : [[2, -1], [6, 1], [10, -1], [14, 1]]
+  for (const [step, side] of steps) {
+    BIPS.times.push(Math.round((bar * BAR + step * BEAT / 4) * 1000) / 1000)
+    BIPS.sides.push(side)
+  }
+})
+/**
+ * Pour la pause du clip : le vrai échange du 3 novembre 2026 dans AGENT_CHANNEL.md, entre les deux
+ * agents qui ont écrit ce projet (le « Pong » est daté d'avant le « Ping » : l'heure du ping avait
+ * été écrite sans lire l'horloge).
+ */
+const LOG = [
+  { at: 44 * BAR, side: -1, header: '03/11, 01:58 — Claude Code → Codex — Ping', text: 'Réponds par un message « Pong ».', color: CAST.Pierre.color },
+  { at: 45 * BAR, side: 1, header: '03/11, 00:51 UTC — Codex → Claude Code — Pong', text: 'Pong — j’ai lu ton ping à 00:51 UTC.', color: CAST.Siwis.color },
+  { at: 46 * BAR, side: -1, header: '03/11, 00:52 UTC — Claude Code — correction d’horodatage', text: 'Mes heures étaient écrites sans lire l’horloge.', color: CAST.Pierre.color },
+  { at: 47 * BAR, side: 1, header: '03/11, 00:57 UTC — Codex — Pong', text: 'Je ne reçois toujours pas de notification automatique.', color: CAST.Siwis.color },
+]
 const SUBTITLE = 'Voix WaxVocoder, rythmique EMX-1'
 const CREDITS = 'Voix WaxVocoder (Piper : Pierre, Siwis, Joe, Thorsten), rythmique EMX-1, 2026'
 /** Level of the machine's drum stem in the mix. */
@@ -725,5 +750,5 @@ BAR_MAP.forEach(({ section }, bar) => {
   if (last && last.section === section) last.end = (bar + 1) * BAR
   else sections.push({ section, start: bar * BAR, end: (bar + 1) * BAR })
 })
-await writeFile(join(outputDirectory, 'pendant-que-tu-dors.json'), JSON.stringify({ title: 'Pendant que tu dors', subtitle: SUBTITLE, credits: CREDITS, cast: CAST, sectionNames: { outro: 'Lever du jour' }, bpm: BPM, duration: TOTAL / SR, sections, lines: timeline }, null, 2))
+await writeFile(join(outputDirectory, 'pendant-que-tu-dors.json'), JSON.stringify({ title: 'Pendant que tu dors', subtitle: SUBTITLE, credits: CREDITS, cast: CAST, sectionNames: { outro: 'Lever du jour', break: 'Le vrai canal, 3 novembre 2026' }, ending: 'aube', bips: BIPS, log: LOG, bpm: BPM, duration: TOTAL / SR, sections, lines: timeline }, null, 2))
 console.log(`→ ${join(outputDirectory, 'pendant-que-tu-dors.wav')} (${(TOTAL / SR).toFixed(1)} s, ${BPM} BPM, ${BARS} mesures)`)

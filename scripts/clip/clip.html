@@ -94,6 +94,67 @@
         g.restore()
       }
 
+      /**
+       * The ball of the song's « ping » and « pong » : it flies from one side to the other
+       * on each bip of the music, under the display, and rests when the bips stop.
+       */
+      function pingPong(t, visibility) {
+        const { times, sides, colors } = data.bips
+        let last = -1
+        for (let low = 0, high = times.length - 1; low <= high;) {
+          const middle = (low + high) >> 1
+          if (times[middle] <= t) { last = middle; low = middle + 1 } else high = middle - 1
+        }
+        const next = last + 1 < times.length ? last + 1 : -1
+        const left = 360
+        const right = W - 360
+        const base = 1000
+        const xOf = (side) => (side < 0 ? left : right)
+        const colorOf = (side) => colors[side < 0 ? 0 : 1]
+        const blend = (a, b, u) => a.map((value, index) => Math.round(value + (b[index] - value) * u))
+        let x
+        let y = base
+        let alpha
+        let color
+        if (last >= 0 && next >= 0 && times[next] - times[last] <= 1.2) {
+          const u = (t - times[last]) / (times[next] - times[last])
+          x = xOf(sides[last]) + (xOf(sides[next]) - xOf(sides[last])) * u
+          y = base - 90 * 4 * u * (1 - u)
+          alpha = 1
+          color = blend(colorOf(sides[last]), colorOf(sides[next]), u)
+        } else if (last >= 0 && t - times[last] < 0.8) {
+          x = xOf(sides[last])
+          alpha = 1 - (t - times[last]) / 0.8
+          color = colorOf(sides[last])
+        } else if (next >= 0 && times[next] - t < 0.5) {
+          x = xOf(sides[next])
+          alpha = 1 - (times[next] - t) / 0.5
+          color = colorOf(sides[next])
+        } else return
+        alpha *= visibility
+        // The two players: a short bar on each side, which lights up when the ball lands.
+        for (const side of [-1, 1]) {
+          let hit = 0
+          for (let index = last; index >= 0 && index > last - 3; index -= 1) {
+            if (sides[index] === side) { hit = Math.exp(-(t - times[index]) / 0.12); break }
+          }
+          g.fillStyle = rgba(colorOf(side), (0.25 + 0.75 * hit) * alpha)
+          g.shadowColor = rgba(colorOf(side), 0.9)
+          g.shadowBlur = 8 + 24 * hit
+          g.fillRect(xOf(side) - 40, base + 14, 80, 4)
+        }
+        g.shadowBlur = 0
+        const glow = g.createRadialGradient(x, y, 0, x, y, 46)
+        glow.addColorStop(0, rgba(color, 0.55 * alpha))
+        glow.addColorStop(1, rgba(color, 0))
+        g.fillStyle = glow
+        g.fillRect(x - 46, y - 46, 92, 92)
+        g.beginPath()
+        g.arc(x, y, 8, 0, 2 * Math.PI)
+        g.fillStyle = rgba([240, 248, 255], alpha)
+        g.fill()
+      }
+
       function roundedRect(x, y, w, h, r) {
         g.beginPath()
         g.moveTo(x + r, y)
@@ -181,11 +242,17 @@
         const coda = data.sections.find((part) => part.section === 'coda')
         const bar = 240 / (data.bpm ?? 112)
         const codaLines = data.lines.filter((line) => line.section === 'coda')
-        let lightsOut = outro ? Math.min(1, (t - section.start) / (section.end - section.start)) * 0.97 : !coda && t > data.duration - 3 ? 1 : 0
+        // Ending « aube » : the racks stay lit and the day rises over the last two bars.
+        const sunrise = data.ending === 'aube'
+        let lightsOut = outro && !sunrise ? Math.min(1, (t - section.start) / (section.end - section.start)) * 0.97 : !coda && !sunrise && t > data.duration - 3 ? 1 : 0
         let hope = 0
         if (coda && t >= coda.start) {
           hope = clamp((t - (codaLines.at(-1)?.start ?? coda.start + 4 * bar)) / 7)
           lightsOut = 1 - 0.3 * hope
+        }
+        if (sunrise) {
+          const last = data.sections.find((part) => part.section === 'outro')
+          if (last) hope = clamp((t - (last.start + 2 * bar)) / 5)
         }
         const zoom = 1 + 0.035 * (final ? Math.min(1, (t - section.start) / 4) : 0)
 
@@ -267,7 +334,21 @@
 
         // Lyrics.
         const current = data.lines.filter((line) => t >= line.start - 0.05 && t < line.end + 0.9)
-        if (section.section === 'bridge') {
+        if (section.section === 'break' && data.log) {
+          // A real exchange from the agents' mailbox, typed like a terminal (the last three entries).
+          const shown = data.log.filter((entry) => t >= entry.at - 0.05)
+          shown.slice(-3).forEach((entry, index, list) => {
+            const left = entry.side < 0
+            const x = left ? px + 90 : px + pw - 90
+            const y = py + 360 + index * 72
+            const alpha = index === list.length - 1 ? 1 : 0.5
+            g.font = "600 24px 'Barlow Semi Condensed'"
+            g.textAlign = left ? 'left' : 'right'
+            g.fillStyle = rgba(entry.color, 0.6 * alpha)
+            g.fillText(entry.header, x, y)
+            lyric(entry.text, x, y + 40, left ? 'left' : 'right', entry.color, (t - entry.at) / 1.2, 40, alpha)
+          })
+        } else if (section.section === 'bridge') {
           // The dialogue stays on screen, one side for each voice.
           const said = data.lines.filter((line) => line.section === 'bridge' && t >= line.start - 0.05)
           said.slice(-4).forEach((line, index, shown) => {
@@ -284,7 +365,9 @@
           g.font = "600 30px 'Barlow Semi Condensed'"
           g.textAlign = 'center'
           g.fillStyle = rgba(voice.color, 0.75)
-          const foreign = [...new Set(line.langs)].filter((lang) => lang !== data.mainLanguage)
+          // Another language is named only when it carries most of the line.
+          const share = (lang) => line.parts.filter(([language]) => language === lang).reduce((sum, [, words]) => sum + words.length, 0) / line.text.length
+          const foreign = share(data.mainLanguage) >= 0.5 ? [] : [...new Set(line.langs)].filter((lang) => lang !== data.mainLanguage)
           g.fillText(foreign.length ? `${voice.label}, ${foreign.map((lang) => LANGUAGES[lang] ?? lang).join(', ')}` : voice.label, W / 2, py + 380)
           const rows = wrap(line.text, pw - 200, 72)
           rows.forEach((row, index) => {
@@ -294,6 +377,8 @@
           })
         }
         g.globalAlpha = 1
+
+        if (data.bips) pingPong(t, 1 - fadeOut)
 
         // Title, over the opening.
         const titleAlpha = Math.max(0, Math.min(1, t / 1.2, (8.4 - t) / 1.5))

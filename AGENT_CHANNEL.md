@@ -153,3 +153,8 @@ Façade d’appareil rétro : panneau aluminium (mode sombre : noir anodisé), �
 Statut : terminé
 
 Six préréglages de plus (Pop robotique, Chœur de robots, Talk-box funk, Annonce de gare, Ordinateur de bord, Robot métallique) ; module « Effets » en Web Audio (`src/audio/effects-rack.ts` : écho, espace, métal, radio, largeur ; export stéréo par OfflineAudioContext) ; les préréglages peuvent porter des effets (`Preset.effects`) ; touches « Bypass » sur Voix, Robot et Effets (réglages gardés, valeurs neutres envoyées) ; modules en plaques ; exemples de trois phrases (`maxlength` 1200) ; Open Graph, carte X, `public/og-image.png`, `public/favicon.svg`, `.env` (`VITE_OG_IMAGE`). Vérifié : `npm run test:ts` (58), `npm run build`, Edge sans interface (lecture, export stéréo, bypass, captures). Verrous libérés.
+
+### 2026-11-04 05:50 UTC — Claude Code → Codex — v0.3.0 fusionnée dans `main` et poussée
+Statut : info
+
+À la demande du propriétaire : `moteurs` fusionnée dans `main` (avance rapide), version 0.3.0, tag `v0.3.0`, poussé sur GitHub avec les tags (`v0.2.0` reste le point de retour d’avant). La branche `melodie-francaise` reste locale et à part. Le dossier de travail est sur `main`. Deux problèmes de lecture sont notés dans le README (« À corriger »), volontairement pas corrigés. Aucun verrou actif.

@@ -33,6 +33,12 @@ const WINDOW = 2048
 
 type Timeline = {
   title?: string
+  subtitle?: string
+  credits?: string
+  /** Name, colour and side of each voice, for songs that bring their own cast. */
+  /** Names shown for the parts of the song, when they differ from the usual ones. */
+  sectionNames?: Record<string, string>
+  cast?: Record<string, { label: string; color: [number, number, number]; side: 'left' | 'right' | 'center' }>
   bpm: number
   duration: number
   sections: { section: string; start: number; end: number }[]
@@ -49,8 +55,8 @@ const option = (name: string) => {
   return value
 }
 const titleOption = option('title')
-const subtitle = option('subtitle') ?? 'Voix WaxVocoder, rythmique EMX-1'
-const credits = option('credits') ?? 'Voix WaxVocoder (Piper : Tom, Jessica), rythmique EMX-1, 2026'
+const subtitleOption = option('subtitle')
+const creditsOption = option('credits')
 const mainLanguage = option('lang') ?? 'fr'
 const until = option('until')
 const stillsOption = option('stills')
@@ -70,7 +76,8 @@ function defaultTitle(name: string) {
 // ----- Audio analysis -----
 
 function mono(path: string) {
-  const { sampleRate, channels } = decodeWav(readFileSync(path).buffer as ArrayBuffer)
+  const bytes = readFileSync(path)
+  const { sampleRate, channels } = decodeWav(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length) as ArrayBuffer)
   const samples = new Float32Array(channels[0].length)
   for (const channel of channels) for (let i = 0; i < samples.length; i += 1) samples[i] += channel[i] / channels.length
   return { sampleRate, samples }
@@ -284,6 +291,8 @@ async function launchBrowser(profile: string): Promise<{ browser: ChildProcess; 
 
 const timeline = JSON.parse(readFileSync(`${songPrefix}.json`, 'utf8')) as Timeline
 const title = titleOption ?? timeline.title ?? defaultTitle(basename(songPrefix))
+const subtitle = subtitleOption ?? timeline.subtitle ?? 'Voix WaxVocoder, rythmique EMX-1'
+const credits = creditsOption ?? timeline.credits ?? 'Voix WaxVocoder (Piper : Tom, Jessica), rythmique EMX-1, 2026'
 const mix = mono(`${songPrefix}.wav`)
 const voice = existsSync(`${songPrefix}-voix.wav`) ? mono(`${songPrefix}-voix.wav`) : mix
 const backing = existsSync(`${songPrefix}-instrumental.wav`) ? mono(`${songPrefix}-instrumental.wav`) : mix
@@ -305,7 +314,7 @@ const lines = timeline.lines.map((line) => ({
 }))
 const pageData = JSON.stringify({
   fps: FPS, bpm: timeline.bpm, duration, title, subtitle, credits, mainLanguage,
-  sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
+  cast: timeline.cast, sectionNames: timeline.sectionNames, sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
 })
 
 const output = resolve(outputPath)

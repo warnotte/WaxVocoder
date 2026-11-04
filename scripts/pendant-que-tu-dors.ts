@@ -725,5 +725,5 @@ BAR_MAP.forEach(({ section }, bar) => {
   if (last && last.section === section) last.end = (bar + 1) * BAR
   else sections.push({ section, start: bar * BAR, end: (bar + 1) * BAR })
 })
-await writeFile(join(outputDirectory, 'pendant-que-tu-dors.json'), JSON.stringify({ title: 'Pendant que tu dors', subtitle: SUBTITLE, credits: CREDITS, cast: CAST, bpm: BPM, duration: TOTAL / SR, sections, lines: timeline }, null, 2))
+await writeFile(join(outputDirectory, 'pendant-que-tu-dors.json'), JSON.stringify({ title: 'Pendant que tu dors', subtitle: SUBTITLE, credits: CREDITS, cast: CAST, sectionNames: { outro: 'Lever du jour' }, bpm: BPM, duration: TOTAL / SR, sections, lines: timeline }, null, 2))
 console.log(`→ ${join(outputDirectory, 'pendant-que-tu-dors.wav')} (${(TOTAL / SR).toFixed(1)} s, ${BPM} BPM, ${BARS} mesures)`)

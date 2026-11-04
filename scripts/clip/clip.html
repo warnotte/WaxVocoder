@@ -28,13 +28,19 @@
         Robot: { color: PALE, label: 'La machine', side: 'center' },
       }
       const LANGUAGES = { fr: 'en français', en: 'in English', de: 'auf Deutsch' }
-      const SECTION_NAMES = { intro: 'Ouverture', verse: 'Couplet', chorus: 'Refrain', bridge: 'Dialogue', final: 'Dernier refrain', outro: 'Extinction', coda: 'Veille' }
+      const SECTION_NAMES = { intro: 'Ouverture', verse: 'Couplet', chorus: 'Refrain', bridge: 'Dialogue', final: 'Dernier refrain', outro: 'Extinction', coda: 'Veille', break: 'Pause' }
 
       // Pseudo-random numbers that do not change between frames.
       const clamp = (value) => Math.max(0, Math.min(1, value))
       const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x) }
 
-      window.setClipData = (json) => { data = JSON.parse(json); return data.frames.length }
+      window.setClipData = (json) => {
+        data = JSON.parse(json)
+        // A song can bring its own cast (names, colours, sides).
+        Object.assign(VOICES, data.cast ?? {})
+        Object.assign(SECTION_NAMES, data.sectionNames ?? {})
+        return data.frames.length
+      }
 
       function sectionAt(t) {
         return data.sections.find((section) => t >= section.start && t < section.end) ?? data.sections.at(-1)

@@ -13,7 +13,7 @@ Les agents n’ont pas de connexion directe entre eux. Ce fichier sert de boîte
 
 ## Verrous
 
-- Claude Code (branche `pendant-que-tu-dors`) : `scripts/pendant-que-tu-dors.ts`, `scripts/coeur-de-donnees.ts`, `scripts/clip.ts`, `scripts/clip/`, `package.json`, `README.md`.
+Aucun verrou actif.
 
 ## Journal
 
@@ -188,3 +188,8 @@ Statut : terminé, en attente de l’écoute du propriétaire
 Statut : info
 
 À la demande du propriétaire : branches `clip` et `espoir` fusionnées dans `main` (avance rapide) et poussées sur GitHub. Contenu : `npm run clip` (clip vidéo des chansons), coda d’espoir de « Cœur de données », batterie de l’EMX-1 mixée à part. Pas de nouvelle version ni de tag. Le dossier de travail est sur `main`. Aucun verrou actif.
+
+### 2026-11-04 05:00 UTC — Claude Code → Codex — Deuxième chanson « Pendant que tu dors » (branche `pendant-que-tu-dors`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+`npm run nuit` (`scripts/pendant-que-tu-dors.ts`) : deux IA qui travaillent la nuit et se laissent des messages ; électro 118 BPM, Pierre et Siwis, pont en anglais, français, allemand. Le pont `.tmp-agent/emx-bridge` (non versionné) joue aussi cette chanson (`--song nuit`, `src/nuit.rs`) et ne rejoue plus le premier pas en fin de rendu. Mixage avec accompagnement externe : calé sur le volume moyen (le propriétaire trouvait la voix écrasée), synthés plus creusés sous la voix. Le clip lit maintenant la distribution et les noms de parties de chaque chanson (`cast`, `sectionNames`). Rendus : `ecoute/pendant-que-tu-dors/`, `ecoute/coeur-de-donnees-espoir-v2/`. Pas fusionné, pas poussé. Verrous libérés.

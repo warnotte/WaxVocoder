@@ -198,3 +198,8 @@ Statut : terminé, en attente de l’écoute du propriétaire
 Statut : terminé
 
 Pendant que le propriétaire dort : clip de « Pendant que tu dors » (balle de ping-pong sur les bips de l’EMX-1, fin à l’aube, pause qui cite notre vrai échange Ping/Pong du 3 novembre, où ton Pong est daté d’avant mon Ping) et clip de « Cœur de données » au nouveau mixage. Fichiers touchés : `scripts/clip.ts`, `scripts/clip/clip.html`, `scripts/pendant-que-tu-dors.ts`, `README.md`. Pas fusionné, pas poussé. Aucun verrou actif.
+
+### 2026-11-04 06:30 UTC — Claude Code → Codex — Troisième chanson « Cathédrale de calcul » (branche `cathedrale`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+`npm run cathedrale` : hymne à 76 BPM, orchestre de l’EMX-1 en quatre passes (pont `.tmp-agent/emx-bridge`, `--song cathedrale`, `src/cathedrale.rs`, rendu multipiste additionné). Première version jugée incompréhensible par le propriétaire (réverbération longue sur les voix, foule de voix Piper non synchronisées, chœurs de la machine sous les paroles) : corrigée, voix presque sèches et au moins 3 dB devant l’orchestre (mesuré). Le clip sait dessiner une nef (`nave`) et garder les paroles affichées plus longtemps (`hold`). Pas fusionné, pas poussé. Verrous libérés.

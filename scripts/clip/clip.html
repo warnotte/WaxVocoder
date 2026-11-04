@@ -71,6 +71,7 @@
           g.fillStyle = 'rgba(30, 48, 52, 0.55)'
           for (let unit = 0; unit < 30; unit += 1) g.fillRect(x + 24, top + 22 + unit * 30, 122, 22)
         }
+        if (data.nave) nave(t, columns, energy, warmth)
         g.globalCompositeOperation = 'lighter'
         for (const { key, x, top, depth } of columns) {
           for (let unit = 0; unit < 30; unit += 1) {
@@ -154,6 +155,48 @@
         g.fillStyle = rgba([240, 248, 255], alpha)
         g.fill()
       }
+
+      /**
+       * The nave: a pointed arch over each rack, made of points of light (the stones), which
+       * light up one after the other over the whole song, « pierre après pierre ».
+       */
+      function nave(t, columns, energy, warmth) {
+        const progress = t / data.duration
+        g.save()
+        g.globalCompositeOperation = 'lighter'
+        for (const { key, x, top, depth } of columns) {
+          const span = 146
+          const rise = span * Math.sin(Math.PI / 3)
+          const stones = []
+          for (let index = 0; index <= 9; index += 1) {
+            const angle = (index / 9) * (Math.PI / 3)
+            stones.push([x + 12 + span - span * Math.cos(angle), top - span * Math.sin(angle)])
+            if (index < 9) stones.push([x + 12 + span * Math.cos(angle), top - span * Math.sin(angle)])
+          }
+          stones.forEach(([sx, sy], index) => {
+            // Each stone has its moment; by the last chorus they are all lit.
+            const moment = 0.04 + 0.78 * hash(key * 131 + index * 17.3)
+            const lit = clamp((progress - moment) / 0.02)
+            if (lit <= 0) return
+            const glow = (0.35 + 0.35 * energy + 0.3 * warmth) * depth * lit
+            const color = warmth > 0 ? [255, 214 - 30 * warmth, 150 - 40 * warmth] : [255, 222, 160]
+            g.fillStyle = rgba(color, Math.min(1, glow))
+            g.fillRect(sx - 2, sy - 2, 4, 4)
+            g.fillStyle = rgba(color, Math.min(1, glow) * 0.18)
+            g.fillRect(sx - 6, sy - 6, 12, 12)
+          })
+          if (sy0(top, rise) > -20) {
+            // Keystone, a little brighter.
+            const lit = clamp((progress - (0.1 + 0.75 * hash(key * 7.7))) / 0.02)
+            if (lit > 0) {
+              g.fillStyle = rgba([255, 236, 190], Math.min(1, (0.6 + 0.4 * energy) * depth * lit))
+              g.fillRect(x + 12 + span / 2 - 3, top - rise - 3, 6, 6)
+            }
+          }
+        }
+        g.restore()
+      }
+      const sy0 = (top, rise) => top - rise
 
       function roundedRect(x, y, w, h, r) {
         g.beginPath()
@@ -333,7 +376,9 @@
         g.fillText(`${SECTION_NAMES[section.section] ?? ''}${sectionNumber(section)}`, px + 60, py + 296)
 
         // Lyrics.
-        const current = data.lines.filter((line) => t >= line.start - 0.05 && t < line.end + 0.9)
+        // A line stays up after it is sung (longer in slow songs), until the next one begins.
+        const hold = data.hold ?? 0.9
+        const current = data.lines.filter((line, index) => t >= line.start - 0.05 && t < Math.min(line.end + hold, data.lines[index + 1]?.start ?? Infinity))
         if (section.section === 'break' && data.log) {
           // A real exchange from the agents' mailbox, typed like a terminal (the last three entries).
           const shown = data.log.filter((entry) => t >= entry.at - 0.05)
@@ -368,7 +413,10 @@
           // Another language is named only when it carries most of the line.
           const share = (lang) => line.parts.filter(([language]) => language === lang).reduce((sum, [, words]) => sum + words.length, 0) / line.text.length
           const foreign = share(data.mainLanguage) >= 0.5 ? [] : [...new Set(line.langs)].filter((lang) => lang !== data.mainLanguage)
-          g.fillText(foreign.length ? `${voice.label}, ${foreign.map((lang) => LANGUAGES[lang] ?? lang).join(', ')}` : voice.label, W / 2, py + 380)
+          // The same words said together by several voices: « Tom et Jessica ».
+          const together = current.filter((other) => other.start === line.start && other.text === line.text)
+          const label = together.length > 1 ? together.map((other) => (VOICES[other.voice] ?? VOICES.Robot).label.split(',')[0]).join(' et ') : voice.label
+          g.fillText(foreign.length ? `${label}, ${foreign.map((lang) => LANGUAGES[lang] ?? lang).join(', ')}` : label, W / 2, py + 380)
           const rows = wrap(line.text, pw - 200, 72)
           rows.forEach((row, index) => {
             const before = rows.slice(0, index).join(' ').length

@@ -44,6 +44,10 @@ type Timeline = {
   bips?: { times: number[]; sides: number[]; colors: [number[], number[]] }
   /** Messages typed on the display during the break (seconds, side, header, text, colour). */
   log?: Array<{ at: number; side: number; header: string; text: string; color: number[] }>
+  /** Pointed arches over the racks, lighting up stone after stone over the song. */
+  nave?: boolean
+  /** Seconds a line stays displayed after it is sung (0.9 by default). */
+  hold?: number
   cast?: Record<string, { label: string; color: [number, number, number]; side: 'left' | 'right' | 'center' }>
   bpm: number
   duration: number
@@ -321,7 +325,7 @@ const lines = timeline.lines.map((line) => ({
 }))
 const pageData = JSON.stringify({
   fps: FPS, bpm: timeline.bpm, duration, title, subtitle, credits, mainLanguage,
-  cast: timeline.cast, sectionNames: timeline.sectionNames, ending: timeline.ending, bips: timeline.bips, log: timeline.log, sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
+  cast: timeline.cast, sectionNames: timeline.sectionNames, ending: timeline.ending, bips: timeline.bips, log: timeline.log, nave: timeline.nave, hold: timeline.hold, sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
 })
 
 const output = resolve(outputPath)

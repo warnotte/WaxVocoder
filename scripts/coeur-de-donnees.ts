@@ -35,7 +35,7 @@ const cliArguments = process.argv.slice(2)
  */
 const backingIndex = cliArguments.indexOf('--backing')
 const backingPath = backingIndex >= 0 ? cliArguments[backingIndex + 1] : undefined
-const outputDirectory = cliArguments.find((argument, index) => !argument.startsWith('--') && index !== backingIndex + 1) ?? 'ecoute/coeur-de-donnees'
+const outputDirectory = cliArguments.find((argument, index) => !argument.startsWith('--') && (backingIndex < 0 || index !== backingIndex + 1)) ?? 'ecoute/coeur-de-donnees'
 
 // ─── Harmonie et forme ────────────────────────────────────────────────────
 
@@ -699,11 +699,20 @@ function master(track: Track, loudness: number): void {
 // ─── Mixage ───────────────────────────────────────────────────────────────
 
 function backing(path: string): { drums: Track; music: Track; kicks: number[]; stems: boolean } {
+  const decode = (file: string) => {
+    const bytes = readFileSync(file)
+    return decodeWav(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length) as ArrayBuffer)
+  }
   // Gauche et droite à leur place : avec la loi de panoramique, ±1 donne √2.
-  // A full mix arrives normalised: brought up to sit 4 to 5 dB under the voices.
-  const level = 2.4 * Math.SQRT1_2
+  // The backing is set by its average loudness, not its peak: a denser render (tubes,
+  // accents) would otherwise come in louder and bury the voices. Reference: the EMX-1
+  // render whose balance was approved by ear (RMS 0.1026 at 2.4 / √2), then 1.6 dB lower
+  // because the voices were still found a little buried.
+  const full = decode(path).channels
+  const loudness = Math.sqrt(full.reduce((sum, channel) => sum + channel.reduce((total, sample) => total + sample * sample, 0), 0) / full.reduce((count, channel) => count + channel.length, 0))
+  const level = 2.4 * Math.SQRT1_2 * 0.085 / Math.max(loudness, 1e-4)
   const load = (file: string) => {
-    const { sampleRate, channels } = decodeWav(readFileSync(file).buffer as ArrayBuffer)
+    const { sampleRate, channels } = decode(file)
     const track = new Track()
     track.add(resample(channels[0], sampleRate, SR), 0, level, -1)
     track.add(resample(channels[1] ?? channels[0], sampleRate, SR), 0, level, 1)
@@ -713,6 +722,8 @@ function backing(path: string): { drums: Track; music: Track; kicks: number[]; s
   if (existsSync(drumStem) && existsSync(synthStem)) return { drums: load(drumStem), music: load(synthStem), kicks: [], stems: true }
   return { drums: new Track(), music: load(path), kicks: [], stems: false }
 }
+/** Level of the machine's drum stem in the mix. */
+const DRUMS_FROM_STEMS = 0.8
 const { drums, music, kicks, stems } = backingPath ? backing(backingPath) : { ...arrange(), stems: false }
 const { effects: vocals, clear: spokenVocals } = await sing()
 voiceChain(vocals)
@@ -721,11 +732,13 @@ const dry = sum([[vocals, 1], [spokenVocals, 1]])
 echo(vocals, 0.12)
 const voiceLevel = envelopeOf(dry, 0.008, 0.2)
 pump(music, kicks, 0.45)
-carve(music, voiceLevel, backingPath ? 0.45 : 0.85, backingPath ? 0.15 : 0.3)
-// The machine's drums keep their snap under the voices; only the synths make room.
-if (stems) carve(drums, voiceLevel, 0.12, 0)
+// With separate drums, the synths (sustained, they mask the words) make more room.
+carve(music, voiceLevel, stems ? 0.62 : backingPath ? 0.45 : 0.85, stems ? 0.22 : backingPath ? 0.15 : 0.3)
+// The machine's drums keep their attack: no saturation, only a little room for the
+// consonants under the voices; the whole backing is matched in loudness (see backing()).
+if (stems) carve(drums, voiceLevel, 0.25, 0)
 else carve(drums, voiceLevel, 0.5, 0.1)
-const mix = sum([[drums, stems ? 0.85 : 0.8], [music, 0.75], [vocals, 1.7], [spokenVocals, 1.7]])
+const mix = sum([[drums, stems ? DRUMS_FROM_STEMS : 0.8], [music, 0.75], [vocals, 1.7], [spokenVocals, 1.7]])
 if (process.env.DEMO_STEMS) {
   // Pistes au niveau du mix, avant mastering, pour mesurer le masquage.
   await mkdir(outputDirectory, { recursive: true })
@@ -733,8 +746,8 @@ if (process.env.DEMO_STEMS) {
   await writeFile(join(outputDirectory, 'bus-musique.wav'), new Uint8Array(encodeWav(sum([[drums, 0.8], [music, 0.75]]).channels(), SR)))
 }
 // Less bus saturation with separate drums: the attacks go through instead of being rounded off.
-master(mix, stems ? 1.3 : 1.8)
-const instrumental = sum([[drums, stems ? 0.85 : 0.8], [music, 0.75]])
+master(mix, stems ? 1.5 : 1.8)
+const instrumental = sum([[drums, stems ? DRUMS_FROM_STEMS : 0.8], [music, 0.75]])
 master(instrumental, stems ? 1.15 : 1.5)
 master(dry, 1.2)
 await mkdir(outputDirectory, { recursive: true })

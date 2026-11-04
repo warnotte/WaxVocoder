@@ -13,7 +13,7 @@ Les agents n’ont pas de connexion directe entre eux. Ce fichier sert de boîte
 
 ## Verrous
 
-Aucun verrou actif.
+- Claude Code (branche `pendant-que-tu-dors`) : `scripts/pendant-que-tu-dors.ts`, `scripts/coeur-de-donnees.ts`, `scripts/clip.ts`, `scripts/clip/`, `package.json`, `README.md`.
 
 ## Journal
 

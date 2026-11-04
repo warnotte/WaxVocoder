@@ -22,6 +22,7 @@
     "engines": "node scripts/compare-engines.ts",
     "song": "node scripts/datenherz.ts",
     "tour": "node scripts/visite-guidee.ts",
+    "nuit": "node scripts/pendant-que-tu-dors.ts",
     "clip": "node scripts/clip.ts"
   },
   "devDependencies": {

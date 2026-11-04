@@ -7,10 +7,11 @@
 // accords entièrement originaux.
 //
 // Usage : npm run build:wasm && node scripts/coeur-de-donnees.ts [dossier-de-sortie]
+import { readFileSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import initialize, { VoiceEngine } from '../src/wasm/voice-engine/voice_engine.js'
-import { encodeWav } from '../src/audio/wav.ts'
+import { decodeWav, encodeWav } from '../src/audio/wav.ts'
 import EspeakInitializer from '@echogarden/espeak-ng-emscripten'
 import { PIPER_VOICES, resample, robotize } from '../src/engines/index.ts'
 import { type PiperConfig, piperPhonemes, PiperVoice } from '../src/engines/piper.ts'
@@ -24,7 +25,11 @@ const SR = 44_100
 const BPM = 112
 const BEAT = 60 / BPM
 const BAR = 4 * BEAT
-const outputDirectory = process.argv[2] ?? 'ecoute/coeur-de-donnees'
+const cliArguments = process.argv.slice(2)
+/** `--backing fichier.wav` : un accompagnement rendu ailleurs (par exemple par l'émulateur EMX-1), aligné sur la mesure 1. */
+const backingIndex = cliArguments.indexOf('--backing')
+const backingPath = backingIndex >= 0 ? cliArguments[backingIndex + 1] : undefined
+const outputDirectory = cliArguments.find((argument, index) => !argument.startsWith('--') && index !== backingIndex + 1) ?? 'ecoute/coeur-de-donnees'
 
 // ─── Harmonie et forme ────────────────────────────────────────────────────
 
@@ -663,7 +668,17 @@ function master(track: Track, loudness: number): void {
 
 // ─── Mixage ───────────────────────────────────────────────────────────────
 
-const { drums, music, kicks } = arrange()
+function backing(path: string): { drums: Track; music: Track; kicks: number[] } {
+  const { sampleRate, channels } = decodeWav(readFileSync(path).buffer as ArrayBuffer)
+  const music = new Track()
+  // Gauche et droite à leur place : avec la loi de panoramique, ±1 donne √2.
+  // A full mix arrives normalised: brought up to sit 4 to 5 dB under the voices.
+  const level = 2.4 * Math.SQRT1_2
+  music.add(resample(channels[0], sampleRate, SR), 0, level, -1)
+  music.add(resample(channels[1] ?? channels[0], sampleRate, SR), 0, level, 1)
+  return { drums: new Track(), music, kicks: [] }
+}
+const { drums, music, kicks } = backingPath ? backing(backingPath) : arrange()
 const { effects: vocals, clear: spokenVocals } = await sing()
 voiceChain(vocals)
 clearChain(spokenVocals)
@@ -671,7 +686,7 @@ const dry = sum([[vocals, 1], [spokenVocals, 1]])
 echo(vocals, 0.12)
 const voiceLevel = envelopeOf(dry, 0.008, 0.2)
 pump(music, kicks, 0.45)
-carve(music, voiceLevel, 0.85, 0.3)
+carve(music, voiceLevel, backingPath ? 0.45 : 0.85, backingPath ? 0.15 : 0.3)
 carve(drums, voiceLevel, 0.5, 0.1)
 const mix = sum([[drums, 0.8], [music, 0.75], [vocals, 1.7], [spokenVocals, 1.7]])
 if (process.env.DEMO_STEMS) {

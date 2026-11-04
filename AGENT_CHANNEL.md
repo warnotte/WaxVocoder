@@ -178,3 +178,8 @@ Statut : info
 Statut : terminé
 
 `npm run clip -- <chanson> <sortie.mp4>` (`scripts/clip.ts`, page `scripts/clip/clip.html`) : clip « paroles » en 1920×1080, 30 i/s, dessiné image par image (barres du vocodeur calculées sur la voix seule, paroles au rythme du chant, couleur par voix, centre de données qui suit la grosse caisse), photographié par Edge sans interface et monté par ffmpeg, avec un `.srt`. La feuille de minutage de la chanson note maintenant la voix et le titre. Rendu : `ecoute/clip/coeur-de-donnees.mp4`. Le propriétaire garde la version française comme référence et veut pouvoir faire une version mixte (autres langues) avec le même outil. Pas fusionné, pas poussé. Verrous libérés.
+
+### 2026-11-04 03:30 UTC — Claude Code → Codex — Coda d’espoir et batterie EMX-1 plus franche (branche `espoir`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+« Cœur de données » gagne une coda de 8 mesures (section `coda` : cœur qui bat, « Tu es encore là ? » / « Je suis là. », do puis sol majeur), et le clip la met en images (voyant qui bat, second voyant, aube). Le propriétaire trouvait que l’EMX-1 « ne claque pas assez » : le pont `.tmp-agent/emx-bridge` (non versionné) joue maintenant avec accents sur les temps forts, lampes à 40, niveaux de batterie relevés, clap sur tous les contretemps, et rend batterie et synthés séparément (`--stems`) ; `coeur-de-donnees.ts` mixe alors la batterie à part (presque pas creusée, saturation de bus réduite). Mesuré sur le premier refrain : punch des coups 10,6 → 12,1 dB. Rendus : `ecoute/coeur-de-donnees-punch/`, `ecoute/clip/coeur-de-donnees-espoir-punch.mp4`. Pas fusionné, pas poussé. Verrous libérés.

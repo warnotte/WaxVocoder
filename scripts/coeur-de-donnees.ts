@@ -4,10 +4,12 @@
 // incertain). Duo entre la machine (Tom) et une personne (Jessica), voix Piper dites à
 // moitié en clair, à moitié dans le vocoder pour que les mots s'entendent ;
 // refrain par le chœur de robots du moteur. Paroles, mélodies, motif et
-// accords entièrement originaux.
+// accords entièrement originaux. Après « Fin de transmission », une coda
+// laisse un peu d'espoir : un cœur qui bat dans le noir, deux répliques, et la
+// musique qui se pose sur un accord majeur.
 //
 // Usage : npm run build:wasm && node scripts/coeur-de-donnees.ts [dossier-de-sortie]
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import initialize, { VoiceEngine } from '../src/wasm/voice-engine/voice_engine.js'
@@ -26,7 +28,11 @@ const BPM = 112
 const BEAT = 60 / BPM
 const BAR = 4 * BEAT
 const cliArguments = process.argv.slice(2)
-/** `--backing fichier.wav` : un accompagnement rendu ailleurs (par exemple par l'émulateur EMX-1), aligné sur la mesure 1. */
+/**
+ * `--backing fichier.wav` : un accompagnement rendu ailleurs (par exemple par l'émulateur EMX-1), aligné sur la mesure 1.
+ * Si `fichier-batterie.wav` et `fichier-synthes.wav` sont à côté, la batterie et les synthés sont mixés séparément :
+ * la batterie garde son attaque sous les voix, seuls les synthés s'effacent.
+ */
 const backingIndex = cliArguments.indexOf('--backing')
 const backingPath = backingIndex >= 0 ? cliArguments[backingIndex + 1] : undefined
 const outputDirectory = cliArguments.find((argument, index) => !argument.startsWith('--') && index !== backingIndex + 1) ?? 'ecoute/coeur-de-donnees'
@@ -52,7 +58,7 @@ function chord(name: string) {
   return { bass: note(0, 1), tones: [note(0, 3), note(minor ? 3 : 4, 3), note(7, 3)] }
 }
 
-type Section = 'intro' | 'verse' | 'pre' | 'chorus' | 'bridge' | 'final' | 'outro'
+type Section = 'intro' | 'verse' | 'pre' | 'chorus' | 'bridge' | 'final' | 'outro' | 'coda'
 const VERSE = ['Dm', 'Am', 'Bb', 'C', 'Dm', 'Am', 'Bb', 'C']
 const CHORUS = ['F', 'F', 'C', 'C', 'Dm', 'Dm', 'Bb', 'C']
 const FORM: Array<[Section, string[]]> = [
@@ -65,6 +71,8 @@ const FORM: Array<[Section, string[]]> = [
   ['verse', VERSE],
   ['final', ['G', 'G', 'D', 'D', 'Em', 'Em', 'C', 'D']],
   ['outro', ['Em', 'C', 'G', 'D']],
+  // Après l'extinction : le cœur seul, puis do majeur et sol majeur.
+  ['coda', ['Em', 'Em', 'C', 'C', 'G', 'G', 'G', 'G']],
 ]
 const BAR_MAP = FORM.flatMap(([section, chords]) => chords.map((name) => ({ section, chord: chord(name) })))
 const BARS = BAR_MAP.length
@@ -145,6 +153,9 @@ const LYRICS: Line[] = [
   ...chorus(52, 2),
   { bar: 61, segments: [['fr', 'Fin de transmission.']], voice: robot('E3'), legato: true },
   { bar: 63, segments: [['de', 'Datenherz.']], voice: robot('B2'), legato: true },
+  // Coda : dans le noir, elle demande, il répond, sur l'arrivée de l'accord majeur.
+  said(66, 'Tu es encore là ?', JESSICA, 'G3 G3 A3 C4 E4'),
+  said(68, 'Je suis là.', TOM, 'B3 A3 G3'),
 ]
 
 /**
@@ -383,8 +394,24 @@ function arrange(): { drums: Track; music: Track; kicks: number[] } {
     const nextSection = BAR_MAP[bar + 1]?.section
     const start = bar * BAR
     const chorusBar = isChorus(section)
-    const last = bar === BARS - 1
     const sectionEnd = nextSection !== section
+    const last = bar === BARS - 1 || (section === 'outro' && sectionEnd)
+    if (section === 'coda') {
+      // Un cœur qui bat : deux coups rapprochés, deux fois par mesure.
+      for (const step of [0, 2, 8, 10]) {
+        drums.add(kickSound, start + step * SIXTEENTH, step % 8 === 0 ? 0.7 : 0.45)
+        kicks.push(start + step * SIXTEENTH)
+      }
+      const fromCoda = bar - BAR_MAP.findIndex((entry) => entry.section === 'coda')
+      if (fromCoda >= 2) {
+        music.add(padChord(current.tones, BAR), start, 0.08, -0.4)
+        music.add(padChord(current.tones.map((tone) => tone * 1.002), BAR), start, 0.08, 0.4)
+      }
+      if (fromCoda >= 4) current.tones.concat(current.tones[0] * 2).forEach((tone, index) => {
+        music.add(bell(tone * (fromCoda >= 6 ? 4 : 2)), start + index * BEAT, 0.05, index % 2 === 0 ? -0.4 : 0.4)
+      })
+      continue
+    }
     // Boîte à rythmes : rien sur les deux premières mesures de l'intro.
     if (!(section === 'intro' && bar < 2) && !last) {
       for (let step = 0; step < 16; step += 1) {
@@ -430,8 +457,10 @@ function arrange(): { drums: Track; music: Track; kicks: number[] } {
     if (nextSection !== undefined && isChorus(nextSection) && !chorusBar) drums.add(riser(BAR), start, 0.35)
     if (chorusBar && firstOfSection) drums.add(crashSound, start, 0.35, 0.2)
   }
-  drums.add(kickSound, BARS * BAR, 0.9)
-  drums.add(crashSound, BARS * BAR, 0.3)
+  if (BAR_MAP.at(-1)?.section !== 'coda') {
+    drums.add(kickSound, BARS * BAR, 0.9)
+    drums.add(crashSound, BARS * BAR, 0.3)
+  }
   return { drums, music, kicks }
 }
 
@@ -669,17 +698,22 @@ function master(track: Track, loudness: number): void {
 
 // ─── Mixage ───────────────────────────────────────────────────────────────
 
-function backing(path: string): { drums: Track; music: Track; kicks: number[] } {
-  const { sampleRate, channels } = decodeWav(readFileSync(path).buffer as ArrayBuffer)
-  const music = new Track()
+function backing(path: string): { drums: Track; music: Track; kicks: number[]; stems: boolean } {
   // Gauche et droite à leur place : avec la loi de panoramique, ±1 donne √2.
   // A full mix arrives normalised: brought up to sit 4 to 5 dB under the voices.
   const level = 2.4 * Math.SQRT1_2
-  music.add(resample(channels[0], sampleRate, SR), 0, level, -1)
-  music.add(resample(channels[1] ?? channels[0], sampleRate, SR), 0, level, 1)
-  return { drums: new Track(), music, kicks: [] }
+  const load = (file: string) => {
+    const { sampleRate, channels } = decodeWav(readFileSync(file).buffer as ArrayBuffer)
+    const track = new Track()
+    track.add(resample(channels[0], sampleRate, SR), 0, level, -1)
+    track.add(resample(channels[1] ?? channels[0], sampleRate, SR), 0, level, 1)
+    return track
+  }
+  const [drumStem, synthStem] = ['batterie', 'synthes'].map((name) => path.replace(/\.wav$/i, `-${name}.wav`))
+  if (existsSync(drumStem) && existsSync(synthStem)) return { drums: load(drumStem), music: load(synthStem), kicks: [], stems: true }
+  return { drums: new Track(), music: load(path), kicks: [], stems: false }
 }
-const { drums, music, kicks } = backingPath ? backing(backingPath) : arrange()
+const { drums, music, kicks, stems } = backingPath ? backing(backingPath) : { ...arrange(), stems: false }
 const { effects: vocals, clear: spokenVocals } = await sing()
 voiceChain(vocals)
 clearChain(spokenVocals)
@@ -688,17 +722,20 @@ echo(vocals, 0.12)
 const voiceLevel = envelopeOf(dry, 0.008, 0.2)
 pump(music, kicks, 0.45)
 carve(music, voiceLevel, backingPath ? 0.45 : 0.85, backingPath ? 0.15 : 0.3)
-carve(drums, voiceLevel, 0.5, 0.1)
-const mix = sum([[drums, 0.8], [music, 0.75], [vocals, 1.7], [spokenVocals, 1.7]])
+// The machine's drums keep their snap under the voices; only the synths make room.
+if (stems) carve(drums, voiceLevel, 0.12, 0)
+else carve(drums, voiceLevel, 0.5, 0.1)
+const mix = sum([[drums, stems ? 0.85 : 0.8], [music, 0.75], [vocals, 1.7], [spokenVocals, 1.7]])
 if (process.env.DEMO_STEMS) {
   // Pistes au niveau du mix, avant mastering, pour mesurer le masquage.
   await mkdir(outputDirectory, { recursive: true })
   await writeFile(join(outputDirectory, 'bus-voix.wav'), new Uint8Array(encodeWav(sum([[vocals, 1.7], [spokenVocals, 1.7]]).channels(), SR)))
   await writeFile(join(outputDirectory, 'bus-musique.wav'), new Uint8Array(encodeWav(sum([[drums, 0.8], [music, 0.75]]).channels(), SR)))
 }
-master(mix, 1.8)
-const instrumental = sum([[drums, 0.8], [music, 0.75]])
-master(instrumental, 1.5)
+// Less bus saturation with separate drums: the attacks go through instead of being rounded off.
+master(mix, stems ? 1.3 : 1.8)
+const instrumental = sum([[drums, stems ? 0.85 : 0.8], [music, 0.75]])
+master(instrumental, stems ? 1.15 : 1.5)
 master(dry, 1.2)
 await mkdir(outputDirectory, { recursive: true })
 const write = (name: string, track: Track) =>

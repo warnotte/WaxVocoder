@@ -304,7 +304,7 @@ const lines = timeline.lines.map((line) => ({
   langs: line.segments.map(([lang]) => lang),
 }))
 const pageData = JSON.stringify({
-  fps: FPS, duration, title, subtitle, credits, mainLanguage,
+  fps: FPS, bpm: timeline.bpm, duration, title, subtitle, credits, mainLanguage,
   sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
 })
 

@@ -68,7 +68,8 @@ describe('engines and robot stage', () => {
     for (const [name, preset] of Object.entries(PRESETS)) {
       const robot = robotize(speech, robotSettings(preset.settings))
       assert.ok(robot.every(Number.isFinite), name)
-      if (name !== 'natural') assert.notEqual(robot, speech.samples, `${name} leaves the voice unchanged`)
+      // A preset changes the voice in the robot stage, or in the effects that follow it (in the browser).
+      if (name !== 'natural' && !preset.effects) assert.notEqual(robot, speech.samples, `${name} leaves the voice unchanged`)
     }
     // Size: a small robot is higher and faster, a giant lower and slower.
     assert.equal(robotize(speech, robotSettings(PRESETS.tinyRobot.settings)).length, Math.floor(speech.samples.length / 1.4))

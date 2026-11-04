@@ -19,7 +19,9 @@
     "vocode": "node scripts/vocode-file.ts",
     "demo": "node scripts/demo-song.ts",
     "voice": "node scripts/fetch-voice.ts",
-    "engines": "node scripts/compare-engines.ts"
+    "engines": "node scripts/compare-engines.ts",
+    "song": "node scripts/datenherz.ts",
+    "tour": "node scripts/visite-guidee.ts"
   },
   "devDependencies": {
     "typescript": "7.0.2",

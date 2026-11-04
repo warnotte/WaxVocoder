@@ -110,6 +110,9 @@ Déposer **tout le contenu** de `dist/` (y compris `.htaccess`) sur le serveur, 
 
 `npm run demo` rend « Kaos le facteur », une chanson électro-pop de près de 2 minutes à 126 BPM : couplets en français (le premier sur un texte du propriétaire), pré-refrain et pont en allemand et en anglais, refrain trilingue dans une même ligne (« Kaos, le facteur / der Briefträger, the postman »), dernier refrain un ton plus haut. Le script vérifie que chaque mélodie a autant de notes que de syllabes et qu’aucune ligne ne déborde, cale la première voyelle de chaque ligne sur le temps, compresse et double la voix, creuse la musique sous la voix et pompe sur la grosse caisse. Sortie dans `ecoute/demo/` : le mix, la piste voix seule calée sur la grille (mesure 1 à t = 0) et l’accompagnement seul ; `DEMO_STEMS=1` écrit aussi les bus avant mastering. L’accompagnement n’est qu’un guide d’écoute ; le rythme et la musique ont vocation à venir de NoobSynth3.
 
+« Datenherz » (`npm run song`, `scripts/datenherz.ts`) : chanson courte et originale en allemand, anglais et français (paroles, mélodies, riff et accords écrits pour WaxVocoder, rien n’est repris d’une chanson existante), hommage à la musique électronique allemande de 1981. Couplets dits par les voix Piper Thorsten, Joe et Tom passées dans le vocoder (une note de la mélodie par syllabe, chaque phrase calée sur deux mesures), refrain par le chœur de robots du moteur → `ecoute/datenherz/`.
+
+Visite guidée (`npm run tour`, `scripts/visite-guidee.ts`) : la voix Piper Siwis présente chaque technique puis la fait entendre (moteurs, langues, rythme, voix Piper, vocoder et porteuses, mélodie et tempo, les treize préréglages, voix naturelle dans le vocoder, correction pop, effets, extrait de Datenherz) → `ecoute/visite/visite-guidee.wav` et `chapitres.txt`. Les effets, en Web Audio dans l’application, y sont reproduits par un équivalent hors navigateur.
 ## Vérifications
 
 ```sh

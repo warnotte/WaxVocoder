@@ -1,0 +1,11 @@
+@import '@fontsource/michroma/400.css';
+@import '@fontsource/barlow-semi-condensed/500.css';
+@import '@fontsource/barlow-semi-condensed/600.css';
+
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+canvas { display: block; }
+/* Forces the fonts to load before the first frame. */
+.preload { position: absolute; left: -9999px; }
+.preload .michroma { font-family: 'Michroma'; }
+.preload .barlow { font-family: 'Barlow Semi Condensed'; font-weight: 500; }
+.preload .barlow-bold { font-family: 'Barlow Semi Condensed'; font-weight: 600; }

@@ -21,7 +21,8 @@
     "voice": "node scripts/fetch-voice.ts",
     "engines": "node scripts/compare-engines.ts",
     "song": "node scripts/datenherz.ts",
-    "tour": "node scripts/visite-guidee.ts"
+    "tour": "node scripts/visite-guidee.ts",
+    "clip": "node scripts/clip.ts"
   },
   "devDependencies": {
     "typescript": "7.0.2",

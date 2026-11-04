@@ -467,7 +467,8 @@ function render(phonemes: string, voice: VoiceSettings, melody: string, language
 }
 
 /** Chronologie exportée pour l'affichage des parties et des paroles. */
-type TimelineLine = { start: number; end: number; section: Section; style: string; segments: Array<[Language, string]> }
+/** `voice` : qui chante la ligne (une voix Piper, le chœur, le robot), pour un clip ou des sous-titres. */
+type TimelineLine = { start: number; end: number; section: Section; style: string; voice: string; segments: Array<[Language, string]> }
 const timeline: TimelineLine[] = []
 
 function styleOf(line: Line): string {
@@ -515,7 +516,7 @@ async function sing(): Promise<{ effects: Track; clear: Track }> {
       vocals.add(take, line.bar * BAR, (line.gain ?? 1) / Math.max(peak, 1e-3) * 0.6)
       const length = take.length / SR
       const fits = length <= 2 * BAR ? '' : ` · DÉBORDE (${length.toFixed(2)} s pour ${(2 * BAR).toFixed(2)} s)`
-      timeline.push({ start: line.bar * BAR, end: line.bar * BAR + length, section: BAR_MAP[line.bar].section, style: 'vocodé', segments: line.segments })
+      timeline.push({ start: line.bar * BAR, end: line.bar * BAR + length, section: BAR_MAP[line.bar].section, style: 'vocodé', voice: info.label, segments: line.segments })
       console.log(`mesure ${String(line.bar + 1).padStart(2)} · ${`${line.segments[0][0]}:${text} (${info.label})`.padEnd(58)} ${length.toFixed(2)} s${fits}`)
       continue
     }
@@ -547,7 +548,7 @@ async function sing(): Promise<{ effects: Track; clear: Track }> {
       length <= room ? '' : `DÉBORDE (${length.toFixed(2)} s pour ${room.toFixed(2)} s)`,
       notes === undefined || notes === syllables ? '' : `MÉLODIE ${notes} notes pour ${syllables} syllabes`,
     ].filter(Boolean).join(' ; ')
-    timeline.push({ start: line.bar * BAR, end: line.bar * BAR + length, section: BAR_MAP[line.bar].section, style: styleOf(line), segments: line.segments })
+    timeline.push({ start: line.bar * BAR, end: line.bar * BAR + length, section: BAR_MAP[line.bar].section, style: styleOf(line), voice: line.melody ? 'Chœur' : 'Robot', segments: line.segments })
     const text = line.segments.map(([lang, words]) => `${lang}:${words}`).join(' + ')
     console.log(`mesure ${String(line.bar + 1).padStart(2)} · ${text.padEnd(58)} ${length.toFixed(2)} s${checks ? ` · ${checks}` : ''}`)
   }
@@ -711,5 +712,5 @@ BAR_MAP.forEach(({ section }, bar) => {
   if (last && last.section === section) last.end = (bar + 1) * BAR
   else sections.push({ section, start: bar * BAR, end: (bar + 1) * BAR })
 })
-await writeFile(join(outputDirectory, 'coeur-de-donnees.json'), JSON.stringify({ bpm: BPM, duration: TOTAL / SR, sections, lines: timeline }, null, 2))
+await writeFile(join(outputDirectory, 'coeur-de-donnees.json'), JSON.stringify({ title: 'Cœur de données', bpm: BPM, duration: TOTAL / SR, sections, lines: timeline }, null, 2))
 console.log(`→ ${join(outputDirectory, 'coeur-de-donnees.wav')} (${(TOTAL / SR).toFixed(1)} s, ${BPM} BPM, ${BARS} mesures)`)

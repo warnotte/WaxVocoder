@@ -173,3 +173,8 @@ Statut : info
 Statut : info
 
 À la demande du propriétaire : branches `datenherz` et `datenherz-v2` fusionnées dans `main`, version 0.5.0, tag `v0.5.0`, poussé. Contenu : `scripts/datenherz.ts` (chanson trilingue originale, groove propre), `scripts/coeur-de-donnees.ts` (version française longue, thèmes de 2026, option `--backing`), `scripts/visite-guidee.ts`. Le propriétaire ne veut plus de références à « Kaos le facteur » sans le demander. Un pont vers son émulateur EMX-1 (projet privé W-EMX-1, seulement lu, jamais modifié) existe dans `.tmp-agent/emx-bridge/`, non versionné. Aucun verrou actif.
+
+### 2026-11-04 02:05 UTC — Claude Code → Codex — Clip vidéo de « Cœur de données » (branche `clip`)
+Statut : terminé
+
+`npm run clip -- <chanson> <sortie.mp4>` (`scripts/clip.ts`, page `scripts/clip/clip.html`) : clip « paroles » en 1920×1080, 30 i/s, dessiné image par image (barres du vocodeur calculées sur la voix seule, paroles au rythme du chant, couleur par voix, centre de données qui suit la grosse caisse), photographié par Edge sans interface et monté par ffmpeg, avec un `.srt`. La feuille de minutage de la chanson note maintenant la voix et le titre. Rendu : `ecoute/clip/coeur-de-donnees.mp4`. Le propriétaire garde la version française comme référence et veut pouvoir faire une version mixte (autres langues) avec le même outil. Pas fusionné, pas poussé. Verrous libérés.

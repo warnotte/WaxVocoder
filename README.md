@@ -135,6 +135,19 @@ Tests Rust : indices acoustiques de l’intelligibilité (spectres de friction e
 - L’intelligibilité a été vérifiée par des mesures acoustiques, pas par un panel d’auditeurs.
 - Poids : dictionnaire CMUdict 3,3 Mo (≈ 0,9 Mo compressé en gzip) ; eSpeak NG 0,8 Mo de code et 24 Mo de données (toutes langues), chargés seulement pour le français ou l’allemand.
 
+## À corriger (noté, pas encore touché)
+
+Constats du propriétaire du 2026-11-04, diagnostiqués mais volontairement laissés en l’état pour ne rien casser :
+
+- **« Lire la phrase » doit parfois être pressé deux fois** pour avoir du son, parfois dès le chargement de la page.
+  - Cause la plus probable, avec eSpeak NG et Piper : la sortie audio (`BufferPlayer`, `src/engines/browser.ts`) est créée après la synthèse, et la première fois après le téléchargement de la voix Piper, donc hors du geste de l’utilisateur ; le navigateur la laisse en pause (règle anti-lecture automatique). Le deuxième clic, nouveau geste, la débloque. Les tests de l’agent tournaient avec cette règle désactivée (`--autoplay-policy=no-user-gesture-required`), d’où l’absence de détection.
+  - Avec WaxVocoder, au premier clic : le son n’arrive qu’une fois le moteur WASM prêt dans l’AudioWorklet ; un deuxième clic pendant l’attente devient « Arrêter ».
+  - Piste : créer et débloquer une seule sortie audio au premier clic, pour tous les moteurs, puis y jouer la voix une fois prête ; afficher un état « chargement » sur la touche.
+- **Toucher au bypass Robot (ou au tempo, à la mélodie, au débit) en pleine lecture oblige à relancer la voix.**
+  - Une phrase est jouée une seule fois. Avec eSpeak NG et Piper, l’étage robot est calculé avant la lecture : les changements de Voix et de Robot ne s’entendent qu’à la lecture suivante (seul le module Effets agit en direct).
+  - Avec WaxVocoder, ces réglages recalculent le minutage de la phrase en cours (`Voice::replan`) ; si la phrase raccourcit (bypass Robot qui retire le tempo), la position dépasse sa fin et le moteur l’arrête.
+  - Pistes : relancer automatiquement la phrase après un tel changement (ou un mode boucle), et garder la position relative lors d’un recalcul.
+
 ## Versions épinglées
 
 - Vite 8.3.5

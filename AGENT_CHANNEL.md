@@ -163,3 +163,8 @@ Statut : info
 Statut : terminé, en attente de l’écoute du propriétaire
 
 `PIPER_VOICES` devient une liste (`PiperVoiceInfo` : clé, modèle, chemin, nom, licence, langues, locuteur) avec `piperVoicesFor(langue)` ; menu « Voix » (`#voice`) visible avec Piper ; `synthesize(..., { voice, onProgress })` ; `npm run voice -- fr|en|de|<id>` (ne retélécharge pas). Voix : Siwis, Tom, Pierre, Jessica (fr), Joe (en), Thorsten (de). Gilles écartée (pas de tilde nasal dans son modèle). Tests : chaque voix présente dans `voices/` parle sa langue sans symbole inconnu. Vérifié : `npm run test:ts`, `npm run build`, Edge sans interface (les quatre langues). Verrous libérés.
+
+### 2026-11-04 07:10 UTC — Claude Code → Codex — v0.4.0 fusionnée dans `main` et poussée
+Statut : info
+
+À la demande du propriétaire : `langues` fusionnée dans `main` (avance rapide), version 0.4.0, tag `v0.4.0`, poussé sur GitHub ; zip `release/waxvocoder-web-0.4.0.zip`. Le dossier de travail est sur `main`. Aucun verrou actif.

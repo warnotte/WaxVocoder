@@ -1,3 +1,5 @@
+import type { EffectSettings } from './audio/effects-rack.ts'
+
 /** Every live setting of the voice engine, shared by the UI, the worklet and scripts. */
 export type VoiceSettings = {
   /** Base pitch in Hz. */
@@ -63,15 +65,20 @@ export const DEFAULT_SETTINGS: Readonly<VoiceSettings> = {
   presence: 0.5,
 }
 
-export const PRESETS: Readonly<Record<string, { label: string; settings: Readonly<VoiceSettings> }>> = {
+/** A preset: voice settings, and the effects after the voice (echo, space…) where it has some. */
+export type Preset = { label: string; settings: Readonly<VoiceSettings>; effects?: Readonly<Partial<EffectSettings>> }
+
+export const PRESETS: Readonly<Record<string, Preset>> = {
   natural: { label: 'Voix naturelle', settings: DEFAULT_SETTINGS },
   kraftwerk: {
     label: 'Robot Kraftwerk',
     settings: { ...DEFAULT_SETTINGS, frequency: 98, intonation: 0, vocoder: 1, chord: 5, quantize: true, tempo: 112, presence: 0.8 },
+    effects: { echo: 0.18, echoTime: 0.27, space: 0.15, width: 0.3 },
   },
   singer: {
     label: 'Robot chanteur',
     settings: { ...DEFAULT_SETTINGS, vocoder: 0.85, chord: 2, melody: 'C3 C3 D#3 C3 G2 G2 A#2 C3', tempo: 100, intonation: 0, presence: 0.8 },
+    effects: { space: 0.25, width: 0.4 },
   },
   speakSpell: {
     label: 'Jouet parlant 1980',
@@ -84,15 +91,18 @@ export const PRESETS: Readonly<Record<string, { label: string; settings: Readonl
   giant: {
     label: 'Robot géant',
     settings: { ...DEFAULT_SETTINGS, frequency: 62, rate: 0.75, intonation: 0.5, formantShift: 0.72, glide: 0.15 },
+    effects: { space: 0.35 },
   },
   wobbly: {
     label: 'Robot en panne',
     settings: { ...DEFAULT_SETTINGS, frequency: 140, intonation: 1, vibrato: 2.5, glide: 0.2, lofi: 0.4, rate: 0.85 },
+    effects: { metal: 0.3 },
   },
   // Spoken intonation snapped to semitones with a near-instant glide: the « corrected » pop voice.
   popRobot: {
     label: 'Pop robotique',
     settings: { ...DEFAULT_SETTINGS, frequency: 150, intonation: 1, quantize: true, glide: 0.012, presence: 0.8 },
+    effects: { echo: 0.2, echoTime: 0.24, space: 0.2, width: 0.35 },
   },
   // Parallel major chords on a simple tune: a choir of machines.
   choir: {
@@ -100,6 +110,7 @@ export const PRESETS: Readonly<Record<string, { label: string; settings: Readonl
     settings: {
       ...DEFAULT_SETTINGS, vocoder: 1, chord: 4, melody: 'C3 E3 G3 E3 F3 A3 G3 E3', tempo: 92, intonation: 0, presence: 0.7,
     },
+    effects: { space: 0.45, width: 0.7 },
   },
   // Octave carrier sliding through a minor pentatonic, as a guitar talk box.
   talkBox: {
@@ -107,11 +118,14 @@ export const PRESETS: Readonly<Record<string, { label: string; settings: Readonl
     settings: {
       ...DEFAULT_SETTINGS, vocoder: 0.85, chord: 1, melody: 'A2 C3 D3 E3 G3 E3 D3 C3', tempo: 104, glide: 0.08, vibrato: 0.35, intonation: 0, presence: 0.55,
     },
+    effects: { echo: 0.25, echoTime: 0.29, width: 0.3 },
   },
   // Narrow, buzzy loudspeaker, slow and deliberate.
   station: {
     label: 'Annonce de gare',
     settings: { ...DEFAULT_SETTINGS, frequency: 125, rate: 0.88, intonation: 0.75, lofi: 0.45, presence: 1 },
+    // The hall of a station: a long reverberation through a narrow loudspeaker.
+    effects: { space: 0.6, radio: 0.55 },
   },
   // Calm, slightly synthetic ship computer: higher, restrained, a touch of vocoder.
   shipComputer: {
@@ -119,6 +133,13 @@ export const PRESETS: Readonly<Record<string, { label: string; settings: Readonl
     settings: {
       ...DEFAULT_SETTINGS, frequency: 172, rate: 0.88, intonation: 0.25, formantShift: 1.12, vocoder: 0.22, chord: 1, glide: 0.04, presence: 0.8,
     },
+    effects: { space: 0.3, width: 0.2 },
+  },
+  // The science-fiction robot: the voice through a ring modulator.
+  metalRobot: {
+    label: 'Robot métallique',
+    settings: { ...DEFAULT_SETTINGS, frequency: 105, rate: 0.9, intonation: 0.3, presence: 0.7 },
+    effects: { metal: 0.85, echo: 0.1, echoTime: 0.16, space: 0.15 },
   },
 }
 

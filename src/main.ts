@@ -10,6 +10,7 @@ import { BufferPlayer, synthesize } from './engines/browser'
 import { type EngineName, ENGINES, PIPER_VOICES, robotSettings, type Speech } from './engines/index'
 import { type EspeakTranscriber, loadEspeak } from './espeak'
 import { BandMeter } from './visualizer'
+import { EffectsRack, type EffectSettings, NO_EFFECTS, renderEffects } from './audio/effects-rack'
 import { ESPEAK_LANGUAGES, type Language } from './ipa'
 import { type Lexicon, transcribe, unknownPhonemeTokens } from './phonemes'
 import { applySettings, CHORDS, DEFAULT_SETTINGS, invalidNotes, PRESETS, type VoiceSettings } from './voice-settings'
@@ -105,6 +106,7 @@ for (const [name, preset] of Object.entries(PRESETS)) {
   key.append(preset.label)
   key.addEventListener('click', () => {
     showSettings(preset.settings)
+    showEffects({ ...NO_EFFECTS, ...preset.effects })
     sendAllSettings()
     showPreset(name)
   })
@@ -184,7 +186,55 @@ function sendPhonemes(): void {
 
 const player = new BufferPlayer()
 const meter = new BandMeter(element<HTMLCanvasElement>('#meter'))
-player.tap = (context, node) => meter.attach(context, node)
+
+/** The effects after the voice, one rack per audio context (the voice's, the player's). */
+let effects: EffectSettings = { ...NO_EFFECTS }
+const racks = new Map<BaseAudioContext, EffectsRack>()
+function rackFor(context: AudioContext): EffectsRack {
+  let rack = racks.get(context)
+  if (!rack) {
+    rack = new EffectsRack(context)
+    rack.setNow(effects)
+    rack.output.connect(context.destination)
+    meter.attach(context, rack.output)
+    racks.set(context, rack)
+  }
+  return rack
+}
+player.route = (context, source) => {
+  source.connect(rackFor(context).input)
+  meter.wake()
+  return () => source.disconnect()
+}
+
+const effectSliders: Array<{ name: keyof EffectSettings; input: HTMLInputElement; output: HTMLOutputElement; format: (value: number) => string }> = [
+  ['echo', 'echo', (value: number) => `${Math.round(value * 100)} %`],
+  ['echoTime', 'echo-time', (value: number) => `${Math.round(value * 1000)} ms`],
+  ['space', 'space', (value: number) => `${Math.round(value * 100)} %`],
+  ['metal', 'metal', (value: number) => `${Math.round(value * 100)} %`],
+  ['radio', 'radio', (value: number) => `${Math.round(value * 100)} %`],
+  ['width', 'width', (value: number) => `${Math.round(value * 100)} %`],
+].map(([name, id, format]) => ({
+  name: name as keyof EffectSettings,
+  input: element<HTMLInputElement>(`#${id as string}`),
+  output: element<HTMLOutputElement>(`#${id as string}-value`),
+  format: format as (value: number) => string,
+}))
+
+function showEffects(next: EffectSettings): void {
+  effects = { ...next }
+  for (const { name, input, output, format } of effectSliders) {
+    input.value = String(effects[name])
+    output.value = format(effects[name])
+  }
+  for (const rack of racks.values()) rack.set(effects)
+}
+
+/** The voice of an export through the effects: stereo, with the echo and reverberation tails. */
+async function withEffects(samples: Float32Array, sampleRate: number): Promise<Float32Array[]> {
+  const silent = Object.entries(effects).every(([name, value]) => name === 'echoTime' || value === 0)
+  return silent ? [samples] : renderEffects(samples, sampleRate, effects)
+}
 const currentEngine = () => engineControl.value as EngineName
 const ENGINE_HELP = 'Avec ce moteur, l’étage robot applique le vocoder (hauteur, porteuse, mélodie à une note par syllabe), le lo-fi, la taille et le vibrato ; débit, intonation, tempo, présence et glissando concernent WaxVocoder.'
 
@@ -283,6 +333,13 @@ for (const { name, input, output, format } of sliders) {
   input.addEventListener('input', () => {
     output.value = format(Number(input.value))
     sendSetting(name, Number(input.value))
+    markCustom()
+  })
+}
+for (const { name, input, output, format } of effectSliders) {
+  input.addEventListener('input', () => {
+    output.value = format(Number(input.value))
+    showEffects({ ...effects, [name]: Number(input.value) })
     markCustom()
   })
 }
@@ -390,8 +447,7 @@ playButton.addEventListener('click', async () => {
         engineFailed = true
         status.textContent = 'Le processeur audio s’est arrêté sur une erreur.'
       }
-      pendingNode.connect(pendingContext.destination)
-      meter.attach(pendingContext, pendingNode)
+      pendingNode.connect(rackFor(pendingContext).input)
       await audioStart
       context = pendingContext
       pendingContext = undefined
@@ -428,11 +484,12 @@ exportButton.addEventListener('click', async () => {
   try {
     if (currentEngine() !== 'waxvocoder') {
       const { samples, sampleRate } = await otherEngineSpeech()
-      const url = URL.createObjectURL(new Blob([encodeWav(samples, sampleRate)], { type: 'audio/wav' }))
+      const channels = await withEffects(samples, sampleRate)
+      const url = URL.createObjectURL(new Blob([encodeWav(channels, sampleRate)], { type: 'audio/wav' }))
       const link = Object.assign(document.createElement('a'), { href: url, download: `wax-vocoder-${currentEngine()}.wav` })
       link.click()
       setTimeout(() => URL.revokeObjectURL(url), 1_000)
-      status.textContent = `WAV exporté (${ENGINES[currentEngine()].label}, ${(samples.length / sampleRate).toFixed(2)} s, ${sampleRate} Hz).`
+      status.textContent = `WAV exporté (${ENGINES[currentEngine()].label}, ${(channels[0].length / sampleRate).toFixed(2)} s, ${sampleRate} Hz, ${channels.length > 1 ? 'stéréo' : 'mono'}).`
       return
     }
     await initWasm({ module_or_path: await compileWasm() })
@@ -449,11 +506,12 @@ exportButton.addEventListener('click', async () => {
       engine.set_active(true)
       const samples = new Float32Array(Math.ceil(engine.duration_seconds() * sampleRate))
       engine.render(samples)
-      const url = URL.createObjectURL(new Blob([encodeWav(samples, sampleRate)], { type: 'audio/wav' }))
+      const channels = await withEffects(samples, sampleRate)
+      const url = URL.createObjectURL(new Blob([encodeWav(channels, sampleRate)], { type: 'audio/wav' }))
       const link = Object.assign(document.createElement('a'), { href: url, download: 'wax-vocoder.wav' })
       link.click()
       setTimeout(() => URL.revokeObjectURL(url), 1_000)
-      status.textContent = `WAV exporté (${engine.duration_seconds().toFixed(2)} s, ${sampleRate} Hz).`
+      status.textContent = `WAV exporté (${(channels[0].length / sampleRate).toFixed(2)} s, ${sampleRate} Hz, ${channels.length > 1 ? 'stéréo' : 'mono'}).`
     } finally {
       engine.free()
     }

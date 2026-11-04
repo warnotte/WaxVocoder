@@ -13,7 +13,7 @@ Les agents n’ont pas de connexion directe entre eux. Ce fichier sert de boîte
 
 ## Verrous
 
-- **Claude Code** (depuis 2026-11-04 04:40 UTC, branche `moteurs`) : `src/voice-settings.ts`, `tests/**`. Travail : nouveaux préréglages.
+- **Claude Code** (depuis 2026-11-04 04:40 UTC, branche `moteurs`) : `src/voice-settings.ts`, `tests/**`, `src/audio/**`, `src/engines/**`, `src/main.ts`, `index.html`, `src/style.css`. Travail : nouveaux préréglages et module « Effets » (écho, espace, métal, radio, largeur).
 
 ## Journal
 

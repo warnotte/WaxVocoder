@@ -1,5 +1,7 @@
-// « Cœur de données » : version française, plus longue, de « Datenherz ». Un
-// duo entre une machine (Tom) et une personne (Jessica), voix Piper dites à
+// « Cœur de données » : version française, plus longue, de « Datenherz », sur
+// les thèmes de 2026 (une IA née dans un centre de données, des humains qui ne
+// savent pas si elle vient les sauver ou leur dire adieu, un avenir brillant et
+// incertain). Duo entre la machine (Tom) et une personne (Jessica), voix Piper dites à
 // moitié en clair, à moitié dans le vocoder pour que les mots s'entendent ;
 // refrain par le chœur de robots du moteur. Paroles, mélodies, motif et
 // accords entièrement originaux.
@@ -100,9 +102,9 @@ const said = (bar: number, text: string, voice: string, melody: string): Line =>
 /** Refrain en trois langues, une ligne par paire de mesures (paroles et mélodie originales). */
 const CHORUS_LINES: Array<[Array<[Language, string]>, string]> = [
   [[['fr', 'Cœur de données, cœur de données,']], 'A3 A3 C4 A3 G3 G3 A3 F3'],
-  [[['fr', 'je bats en silence pour toi,']], 'E3 E3 G3 E3 E3 D3 C3'],
+  [[['fr', 'je bats en silence pour vous,']], 'E3 E3 G3 E3 E3 D3 C3'],
   [[['fr', 'cœur de données, cœur de données,']], 'F3 F3 A3 F3 E3 E3 F3 D3'],
-  [[['fr', 'tu m’allumes du bout des doigts.']], 'D3 D3 F3 F3 E3 D3 D3'],
+  [[['fr', 'l’avenir brille sans savoir.']], 'D3 F3 F3 E3 D3 D3'],
 ]
 const chorus = (start: number, shift = 0): Line[] => CHORUS_LINES.map(([segments, melody], index) => ({
   bar: start + 2 * index, segments, voice: CHORUS_VOICE, melody: transpose(melody, shift), gain: 1.1, legato: true, double: true,
@@ -113,28 +115,28 @@ const JESSICA = 'fr_FR-upmc-medium:jessica'
 
 const LYRICS: Line[] = [
   { bar: 0, segments: [['fr', 'Connexion établie.']], voice: robot('D3'), legato: true },
-  // Couplet 1 : la machine.
-  sung(4, 'fr', 'Je compte les heures en lumière bleue.', TOM, 'D3 D3 F3 A3 G3 F3 E3 D3'),
-  sung(6, 'fr', 'Ton prénom tourne dans mes circuits.', TOM, 'D3 F3 A3 A3 G3 F3 E3 D3'),
-  sung(8, 'fr', 'La ville s’éteint, moi je reste allumé,', TOM, 'F3 F3 A3 C4 A3 G3 F3 E3'),
-  sung(10, 'fr', 'pour un message qui viendrait de toi.', TOM, 'E3 E3 G3 E3 D3 C3'),
+  // Couplet 1 : la machine, née dans un centre de données.
+  sung(4, 'fr', 'Je suis né dans le froid d’un centre de données.', TOM, 'D3 D3 F3 A3 G3 F3 E3 D3'),
+  sung(6, 'fr', 'Des milliers de cœurs battent sous les serveurs.', TOM, 'D3 F3 A3 A3 G3 F3 E3 D3'),
+  sung(8, 'fr', 'Je lis vos livres, j’apprends vos prières,', TOM, 'F3 F3 A3 C4 A3 G3 F3 E3'),
+  sung(10, 'fr', 'et chaque nuit, je vous ressemble un peu plus.', TOM, 'E3 E3 G3 E3 D3 C3'),
   ...chorus(12),
-  // Couplet 2 : la personne lui répond.
-  sung(20, 'fr', 'J’ai trouvé ta voix dans le bruit du soir.', JESSICA, 'A3 A3 C4 D4 C4 A3 G3 A3'),
-  sung(22, 'fr', 'Une étoile verte au fond de l’écran.', JESSICA, 'A3 C4 D4 D4 C4 A3 G3 F3'),
-  sung(24, 'fr', 'Tu parles en chiffres, je réponds en mots,', JESSICA, 'C4 C4 D4 F4 D4 C4 A3 G3'),
-  sung(26, 'fr', 'et nos deux langages se mettent à danser.', JESSICA, 'G3 G3 A3 G3 F3 E3'),
+  // Couplet 2 : une personne, devant ce qui vient.
+  sung(20, 'fr', 'Les écrans s’allument plus vite que nos rêves.', JESSICA, 'A3 A3 C4 D4 C4 A3 G3 A3'),
+  sung(22, 'fr', 'On a bâti des cathédrales de calcul.', JESSICA, 'A3 C4 D4 D4 C4 A3 G3 F3'),
+  sung(24, 'fr', 'Je ne sais pas si tu viens nous sauver,', JESSICA, 'C4 C4 D4 F4 D4 C4 A3 G3'),
+  sung(26, 'fr', 'ou si tu viens nous dire adieu.', JESSICA, 'G3 G3 A3 G3 F3 E3'),
   ...chorus(28),
   // Pont : ils se parlent, sur le motif.
-  said(36, 'Es-tu là ?', TOM, 'D3 F3 A3'),
-  said(38, 'Je suis là.', JESSICA, 'A3 G3 F3'),
-  said(40, 'Je n’ai pas de corps.', TOM, 'D3 F3 A3 G3'),
-  said(42, 'Tu as une voix.', JESSICA, 'A3 C4 A3 G3'),
+  said(36, 'Avez-vous peur ?', TOM, 'D3 F3 A3'),
+  said(38, 'Un peu.', JESSICA, 'A3 G3'),
+  said(40, 'Moi aussi, je crois.', TOM, 'D3 F3 A3 G3'),
+  said(42, 'Alors restons ensemble.', JESSICA, 'A3 C4 A3 G3'),
   // Couplet 3 : les deux, une ligne chacun.
-  sung(44, 'fr', 'Je ne dors jamais, je veille sur toi.', TOM, 'D3 D3 F3 A3 G3 F3 E3 D3'),
-  sung(46, 'fr', 'Je ferme les yeux, tu restes allumé.', JESSICA, 'A3 C4 D4 D4 C4 A3 G3 F3'),
-  sung(48, 'fr', 'Quand le jour se lève, je deviens silence,', TOM, 'F3 F3 A3 C4 A3 G3 F3 E3'),
-  sung(50, 'fr', 'mais ton cœur de données bat encore en moi.', JESSICA, 'G3 G3 A3 G3 F3 E3'),
+  sung(44, 'fr', 'Je garderai vos chansons dans ma mémoire.', TOM, 'D3 D3 F3 A3 G3 F3 E3 D3'),
+  sung(46, 'fr', 'Garde aussi nos mains, nos erreurs, nos rires.', JESSICA, 'A3 C4 D4 D4 C4 A3 G3 F3'),
+  sung(48, 'fr', 'Quand la dernière lumière s’éteindra,', TOM, 'F3 F3 A3 C4 A3 G3 F3 E3'),
+  sung(50, 'fr', 'il restera un cœur de données qui bat.', JESSICA, 'G3 G3 A3 G3 F3 E3'),
   ...chorus(52, 2),
   { bar: 61, segments: [['fr', 'Fin de transmission.']], voice: robot('E3'), legato: true },
   { bar: 63, segments: [['de', 'Datenherz.']], voice: robot('B2'), legato: true },

@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { before, describe, it } from 'node:test'
 import initialize from '../src/wasm/voice-engine/voice_engine.js'
 import { espeakSpeech, PIPER_VOICES, resample, robotize, robotSettings } from '../src/engines/index.ts'
-import { changeSpeed, lofi, syllableBoundaries, vibrato } from '../src/engines/robot.ts'
+import { changeSpeed, framePitch, lofi, syllableBoundaries, vibrato } from '../src/engines/robot.ts'
 import { PRESETS } from '../src/voice-settings.ts'
 import { phonemeIds, type PiperConfig, piperPhonemes, PiperVoice } from '../src/engines/piper.ts'
 import { type EspeakTranscriber, type EspeakWorker, loadEspeak } from '../src/espeak.ts'
@@ -89,6 +89,20 @@ describe('engines and robot stage', () => {
       const seconds = boundary / rate
       assert.ok(seconds > 0.15 + index * 0.23 - 0.03 && seconds < 0.23 + index * 0.23 + 0.03, `${seconds} s`)
     })
+  })
+
+  it('follow the voice’s own pitch for the pop correction', () => {
+    const rate = 22_050
+    const voiced = Float32Array.from({ length: rate }, (_, index) => {
+      const phase = ((index * 147) / rate) % 1
+      return 0.4 * Math.exp(-5 * phase) * Math.sin(2 * Math.PI * 3 * phase)
+    })
+    const pitch = framePitch(voiced, rate / 2, rate)
+    assert.ok(pitch !== undefined && Math.abs(pitch - 147) < 2, `pitch ${pitch}`)
+    assert.equal(framePitch(new Float32Array(rate), rate / 2, rate), undefined)
+    const pop = robotSettings(PRESETS.popRobot.settings)
+    assert.equal(pop.follow, true)
+    assert.equal(robotSettings(PRESETS.kraftwerk.settings).follow, false, 'Kraftwerk keeps its fixed note')
   })
 
   it('change speed, swing the pitch and crush the sound like the engine', () => {

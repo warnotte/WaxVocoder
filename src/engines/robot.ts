@@ -26,13 +26,22 @@ export type RobotSettings = {
   size?: number
   /** Vibrato depth in semitones. */
   vibrato?: number
+  /**
+   * The carrier follows the voice's own pitch, snapped to the nearest
+   * semitone: the « corrected » pop voice, for voices whose pitch WaxVocoder
+   * does not control. Replaces `frequency` and `melody`.
+   */
+  follow?: boolean
 }
 
 /** The robot stage that matches a WaxVocoder preset. */
 export function robotSettings(settings: VoiceSettings): RobotSettings {
   const melody = settings.melody.split(/\s+/).map(noteFrequency).filter((note): note is number => note !== undefined)
+  // « Notes justes » without a vocoder snaps WaxVocoder's own pitch; for another voice, the vocoder does it.
+  const follow = settings.quantize && settings.vocoder === 0
   return {
-    mix: settings.vocoder,
+    follow,
+    mix: follow ? 0.9 : settings.vocoder,
     frequency: settings.frequency,
     chord: settings.chord,
     melody,
@@ -130,7 +139,43 @@ export function syllableBoundaries(samples: Float32Array, sampleRate: number): n
   return boundaries
 }
 
-/** The channel vocoder on a fixed note, or on the melody (one note per syllable). */
+/**
+ * Pitch at `center` (samples) by normalised autocorrelation over 30 ms, the
+ * shortest lag close to the best one; undefined when quiet or not periodic.
+ */
+export function framePitch(samples: Float32Array, center: number, sampleRate: number): number | undefined {
+  const window = Math.round(0.03 * sampleRate)
+  const minLag = Math.floor(sampleRate / 400)
+  const maxLag = Math.ceil(sampleRate / 60)
+  const start = Math.round(center - (window + maxLag) / 2)
+  if (start < 0 || start + window + maxLag >= samples.length) return undefined
+  let energy = 0
+  for (let index = 0; index < window; index += 1) energy += samples[start + index] ** 2
+  if (energy / window < 1e-5) return undefined
+  const correlation = new Float64Array(maxLag + 2)
+  let best = 0
+  for (let lag = minLag; lag <= maxLag + 1; lag += 1) {
+    let product = 0
+    let lagged = 0
+    for (let index = 0; index < window; index += 1) {
+      product += samples[start + index] * samples[start + index + lag]
+      lagged += samples[start + index + lag] ** 2
+    }
+    correlation[lag] = product / Math.sqrt(energy * lagged + 1e-12)
+    if (lag <= maxLag) best = Math.max(best, correlation[lag])
+  }
+  if (best < 0.5) return undefined
+  for (let lag = minLag + 1; lag <= maxLag; lag += 1) {
+    if (correlation[lag] >= 0.9 * best && correlation[lag] >= correlation[lag - 1] && correlation[lag] >= correlation[lag + 1]) {
+      return sampleRate / lag
+    }
+  }
+  return undefined
+}
+
+const snapToSemitone = (frequency: number) => 440 * 2 ** (Math.round(12 * Math.log2(frequency / 440)) / 12)
+
+/** The channel vocoder on a fixed note, on the melody (one note per syllable), or on the voice's own pitch. */
 function vocode(samples: Float32Array, sampleRate: number, settings: RobotSettings): Float32Array {
   const vocoder = new AudioVocoderEngine(sampleRate)
   vocoder.set_chord(settings.chord)
@@ -140,14 +185,29 @@ function vocode(samples: Float32Array, sampleRate: number, settings: RobotSettin
   const input = samples.map((sample) => sample * 0.5)
   const output = new Float32Array(input.length)
   const melody = settings.melody ?? []
-  const starts = melody.length > 0 ? [0, ...syllableBoundaries(samples, sampleRate)] : [0]
-  starts.forEach((start, syllable) => {
-    const end = starts[syllable + 1] ?? input.length
-    vocoder.set_frequency(melody.length > 0 ? melody[syllable % melody.length] : settings.frequency)
-    const chunk = new Float32Array(end - start)
-    vocoder.process(input.subarray(start, end), chunk)
-    output.set(chunk, start)
-  })
+  if (settings.follow) {
+    // Every 10 ms, the carrier jumps to the voice's pitch rounded to a semitone (held through unvoiced parts).
+    const block = Math.round(0.01 * sampleRate)
+    let carrier = settings.frequency
+    for (let start = 0; start < input.length; start += block) {
+      const end = Math.min(start + block, input.length)
+      const pitch = framePitch(samples, start + block / 2, sampleRate)
+      if (pitch !== undefined) carrier = snapToSemitone(pitch)
+      vocoder.set_frequency(carrier)
+      const chunk = new Float32Array(end - start)
+      vocoder.process(input.subarray(start, end), chunk)
+      output.set(chunk, start)
+    }
+  } else {
+    const starts = melody.length > 0 ? [0, ...syllableBoundaries(samples, sampleRate)] : [0]
+    starts.forEach((start, syllable) => {
+      const end = starts[syllable + 1] ?? input.length
+      vocoder.set_frequency(melody.length > 0 ? melody[syllable % melody.length] : settings.frequency)
+      const chunk = new Float32Array(end - start)
+      vocoder.process(input.subarray(start, end), chunk)
+      output.set(chunk, start)
+    })
+  }
   vocoder.free()
   return output
 }

@@ -89,6 +89,37 @@ export const PRESETS: Readonly<Record<string, { label: string; settings: Readonl
     label: 'Robot en panne',
     settings: { ...DEFAULT_SETTINGS, frequency: 140, intonation: 1, vibrato: 2.5, glide: 0.2, lofi: 0.4, rate: 0.85 },
   },
+  // Spoken intonation snapped to semitones with a near-instant glide: the « corrected » pop voice.
+  popRobot: {
+    label: 'Pop robotique',
+    settings: { ...DEFAULT_SETTINGS, frequency: 150, intonation: 1, quantize: true, glide: 0.012, presence: 0.8 },
+  },
+  // Parallel major chords on a simple tune: a choir of machines.
+  choir: {
+    label: 'Chœur de robots',
+    settings: {
+      ...DEFAULT_SETTINGS, vocoder: 1, chord: 4, melody: 'C3 E3 G3 E3 F3 A3 G3 E3', tempo: 92, intonation: 0, presence: 0.7,
+    },
+  },
+  // Octave carrier sliding through a minor pentatonic, as a guitar talk box.
+  talkBox: {
+    label: 'Talk-box funk',
+    settings: {
+      ...DEFAULT_SETTINGS, vocoder: 0.85, chord: 1, melody: 'A2 C3 D3 E3 G3 E3 D3 C3', tempo: 104, glide: 0.08, vibrato: 0.35, intonation: 0, presence: 0.55,
+    },
+  },
+  // Narrow, buzzy loudspeaker, slow and deliberate.
+  station: {
+    label: 'Annonce de gare',
+    settings: { ...DEFAULT_SETTINGS, frequency: 125, rate: 0.88, intonation: 0.75, lofi: 0.45, presence: 1 },
+  },
+  // Calm, slightly synthetic ship computer: higher, restrained, a touch of vocoder.
+  shipComputer: {
+    label: 'Ordinateur de bord',
+    settings: {
+      ...DEFAULT_SETTINGS, frequency: 172, rate: 0.88, intonation: 0.25, formantShift: 1.12, vocoder: 0.22, chord: 1, glide: 0.04, presence: 0.8,
+    },
+  },
 }
 
 const SETTERS: { [Name in keyof VoiceSettings]: (engine: VoiceControls, value: VoiceSettings[Name]) => void } = {

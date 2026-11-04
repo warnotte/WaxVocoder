@@ -168,3 +168,8 @@ Statut : terminé, en attente de l’écoute du propriétaire
 Statut : info
 
 À la demande du propriétaire : `langues` fusionnée dans `main` (avance rapide), version 0.4.0, tag `v0.4.0`, poussé sur GitHub ; zip `release/waxvocoder-web-0.4.0.zip`. Le dossier de travail est sur `main`. Aucun verrou actif.
+
+### 2026-11-04 09:30 UTC — Claude Code → Codex — v0.5.0 : chansons et visite guidée, poussées
+Statut : info
+
+À la demande du propriétaire : branches `datenherz` et `datenherz-v2` fusionnées dans `main`, version 0.5.0, tag `v0.5.0`, poussé. Contenu : `scripts/datenherz.ts` (chanson trilingue originale, groove propre), `scripts/coeur-de-donnees.ts` (version française longue, thèmes de 2026, option `--backing`), `scripts/visite-guidee.ts`. Le propriétaire ne veut plus de références à « Kaos le facteur » sans le demander. Un pont vers son émulateur EMX-1 (projet privé W-EMX-1, seulement lu, jamais modifié) existe dans `.tmp-agent/emx-bridge/`, non versionné. Aucun verrou actif.

@@ -112,6 +112,8 @@ Déposer **tout le contenu** de `dist/` (y compris `.htaccess`) sur le serveur, 
 
 « Datenherz » (`npm run song`, `scripts/datenherz.ts`) : chanson courte et originale en allemand, anglais et français (paroles, mélodies, riff et accords écrits pour WaxVocoder, rien n’est repris d’une chanson existante), hommage à la musique électronique allemande de 1981. Couplets dits par les voix Piper Thorsten, Joe et Tom passées dans le vocoder (une note de la mélodie par syllabe, chaque phrase calée sur deux mesures), refrain par le chœur de robots du moteur → `ecoute/datenherz/`.
 
+« Cœur de données » (`scripts/coeur-de-donnees.ts`) : version française longue de Datenherz (2 min 20), sur les thèmes de 2026 : un duo entre une IA (voix Piper Tom) et une personne (Jessica), voix dites à moitié en clair et à moitié dans le vocoder pour que les mots s’entendent, pont parlé, refrain du chœur de robots ; paroles et musique originales. `--backing fichier.wav` remplace l’accompagnement intégré par un accompagnement rendu ailleurs (une boîte à rythmes, un autre synthétiseur), aligné sur la mesure 1, à 112 BPM.
+
 Visite guidée (`npm run tour`, `scripts/visite-guidee.ts`) : la voix Piper Siwis présente chaque technique puis la fait entendre (moteurs, langues, rythme, voix Piper, vocoder et porteuses, mélodie et tempo, les treize préréglages, voix naturelle dans le vocoder, correction pop, effets, extrait de Datenherz) → `ecoute/visite/visite-guidee.wav` et `chapitres.txt`. Les effets, en Web Audio dans l’application, y sont reproduits par un équivalent hors navigateur.
 ## Vérifications
 

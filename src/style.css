@@ -145,6 +145,7 @@ select {
 }
 
 select:disabled { opacity: 0.5; cursor: not-allowed; }
+.select-control[hidden] { display: none; }
 
 /* ─── Display: the one lit element ──────────────────────────────────────── */
 

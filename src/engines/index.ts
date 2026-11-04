@@ -15,12 +15,40 @@ export const ENGINES = {
 } as const
 export type EngineName = keyof typeof ENGINES
 
-/** Piper voices offered per language, all under licences that allow any use. */
-export const PIPER_VOICES: Partial<Record<Language, { id: string; path: string; licence: string }>> = {
-  fr: { id: 'fr_FR-siwis-medium', path: 'fr/fr_FR/siwis/medium', licence: 'CC BY 4.0 (SIWIS, université d’Édimbourg)' },
-  'fr-CA': { id: 'fr_FR-siwis-medium', path: 'fr/fr_FR/siwis/medium', licence: 'CC BY 4.0 (SIWIS, université d’Édimbourg)' },
-  'fr-BE': { id: 'fr_FR-siwis-medium', path: 'fr/fr_FR/siwis/medium', licence: 'CC BY 4.0 (SIWIS, université d’Édimbourg)' },
+/** A Piper voice: a model file and, for a model with several speakers, one of them. */
+export type PiperVoiceInfo = {
+  /** Unique key, e.g. `fr_FR-upmc-medium:pierre`. */
+  key: string
+  /** Model file name without extension (`<id>.onnx`, `<id>.onnx.json`). */
+  id: string
+  /** Folder in rhasspy/piper-voices. */
+  path: string
+  label: string
+  licence: string
+  languages: readonly Language[]
+  speaker?: number
 }
+
+const FRENCH: readonly Language[] = ['fr', 'fr-CA', 'fr-BE']
+
+/**
+ * Piper voices, all under free licences (none forbids commercial use); the
+ * first of a language is its default. Left out: fr_FR-gilles-low (its model
+ * has no nasal vowels: « bon » would be « bo »), fr_FR-mls (125 speakers of
+ * uneven quality), and voices under non-commercial licences (lessac, ryan, hfc).
+ */
+export const PIPER_VOICES: readonly PiperVoiceInfo[] = [
+  { key: 'fr_FR-siwis-medium', id: 'fr_FR-siwis-medium', path: 'fr/fr_FR/siwis/medium', label: 'Siwis', licence: 'CC BY 4.0 (SIWIS, université d’Édimbourg)', languages: FRENCH },
+  { key: 'fr_FR-tom-medium', id: 'fr_FR-tom-medium', path: 'fr/fr_FR/tom/medium', label: 'Tom', licence: 'AGPL-3.0 (Tjiho)', languages: FRENCH },
+  { key: 'fr_FR-upmc-medium:pierre', id: 'fr_FR-upmc-medium', path: 'fr/fr_FR/upmc/medium', label: 'Pierre', licence: 'CC BY-SA 4.0 (UPMC, MaryTTS)', languages: FRENCH, speaker: 1 },
+  { key: 'fr_FR-upmc-medium:jessica', id: 'fr_FR-upmc-medium', path: 'fr/fr_FR/upmc/medium', label: 'Jessica', licence: 'CC BY-SA 4.0 (UPMC, MaryTTS)', languages: FRENCH, speaker: 0 },
+  { key: 'en_US-joe-medium', id: 'en_US-joe-medium', path: 'en/en_US/joe/medium', label: 'Joe', licence: 'CC0 (OHF-Voice)', languages: ['en'] },
+  { key: 'de_DE-thorsten-medium', id: 'de_DE-thorsten-medium', path: 'de/de_DE/thorsten/medium', label: 'Thorsten', licence: 'CC0 (Thorsten-Voice)', languages: ['de'] },
+]
+
+/** The Piper voices of a language, its default first. */
+export const piperVoicesFor = (language: Language): PiperVoiceInfo[] =>
+  PIPER_VOICES.filter((voice) => voice.languages.includes(language))
 
 /** Where Piper voices are fetched from when they are not served next to the page. */
 export const PIPER_VOICE_BASE = 'https://huggingface.co/rhasspy/piper-voices/resolve/main'

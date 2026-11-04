@@ -33,12 +33,12 @@ Le menu « Moteur » choisit qui parle ; l’étage robot (vocoder, hauteur de l
 
 - **WaxVocoder** : la voix à formants du moteur Rust (temps réel, robot, chant note par note, tempo, tous les réglages).
 - **eSpeak NG** : la voix d’eSpeak NG elle-même (déjà chargé pour la transcription).
-- **Piper** : voix neuronale naturelle, entraînée sur un vrai locuteur (`src/engines/piper.ts`, ONNX Runtime Web 1.30.0 en WASM, phonèmes par le même eSpeak NG). Voix française `fr_FR-siwis-medium` (CC BY 4.0, SIWIS, université d’Édimbourg ; ≈ 63 Mo), téléchargée au premier usage depuis `voices/<id>/` à côté de la page s’il existe, sinon depuis Hugging Face (`rhasspy/piper-voices`). Pas encore de voix Piper pour l’anglais et l’allemand dans l’application (candidates libres : `en_GB-cori`, domaine public ; `en_US-libritts_r`, CC BY 4.0 ; `de_DE-thorsten`, CC0).
+- **Piper** : voix neuronales naturelles, entraînées sur de vrais locuteurs (`src/engines/piper.ts`, ONNX Runtime Web 1.30.0 en WASM, phonèmes par le même eSpeak NG). Menu « Voix » : en français Siwis (CC BY 4.0, SIWIS, université d’Édimbourg), Tom (AGPL-3.0), Pierre et Jessica (CC BY-SA 4.0, UPMC) ; en anglais Joe (CC0) ; en allemand Thorsten (CC0). Chaque voix (≈ 63 à 77 Mo) est téléchargée au premier usage depuis `voices/<id>/` à côté de la page s’il existe, sinon depuis Hugging Face (`rhasspy/piper-voices`). Écartées : `fr_FR-gilles-low` (pas de voyelles nasales), `fr_FR-mls` (125 voix inégales), et les voix sous licence non commerciale (lessac, ryan, hfc).
 
 Une voix Piper passée dans le vocoder, c’est la méthode des robots de Kraftwerk (une vraie voix dans un vocoder). Avec eSpeak NG et Piper, les réglages propres à WaxVocoder (mélodie, tempo, intonation, taille…) sont sans effet.
 
 ```sh
-npm run voice -- fr     # télécharge la voix Piper française dans voices/ (scripts, tests, serveur de développement)
+npm run voice -- fr     # télécharge les voix Piper d’une langue (fr, en, de) dans voices/ (scripts, tests, serveur de développement)
 npm run engines        # la même phrase avec chaque moteur, puis dans le vocoder → ecoute/moteurs/comparaison.wav
 ```
 
@@ -147,6 +147,7 @@ Constats du propriétaire du 2026-11-04, diagnostiqués mais volontairement lais
   - Une phrase est jouée une seule fois. Avec eSpeak NG et Piper, l’étage robot est calculé avant la lecture : les changements de Voix et de Robot ne s’entendent qu’à la lecture suivante (seul le module Effets agit en direct).
   - Avec WaxVocoder, ces réglages recalculent le minutage de la phrase en cours (`Voice::replan`) ; si la phrase raccourcit (bypass Robot qui retire le tempo), la position dépasse sa fin et le moteur l’arrête.
   - Pistes : relancer automatiquement la phrase après un tel changement (ou un mode boucle), et garder la position relative lors d’un recalcul.
+- **Exporter pendant la lecture** : l’export se fait, mais le message « WAV exporté » est aussitôt remplacé par l’indicateur de lecture (« Lecture · crête … »). Piste : ne pas écraser un message d’export récent.
 
 ## Versions épinglées
 

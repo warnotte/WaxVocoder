@@ -5,7 +5,7 @@
  */
 import type { EspeakTranscriber } from '../espeak.ts'
 import { ESPEAK_LANGUAGES, type Language } from '../ipa.ts'
-import { type EngineName, espeakSpeech, PIPER_VOICE_BASE, PIPER_VOICES, robotize, type RobotSettings, type Speech } from './index.ts'
+import { type EngineName, espeakSpeech, PIPER_VOICE_BASE, type PiperVoiceInfo, piperVoicesFor, robotize, type RobotSettings, type Speech } from './index.ts'
 import { type PiperConfig, piperPhonemes, PiperVoice } from './piper.ts'
 
 const voices = new Map<string, Promise<PiperVoice>>()
@@ -40,10 +40,8 @@ async function fetchFirst(urls: string[], onProgress?: (fraction: number) => voi
   throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }
 
-/** Loads (once) the Piper voice of a language; `onProgress` follows the model download. */
-export function loadPiperVoice(language: Language, onProgress?: (fraction: number) => void): Promise<PiperVoice> {
-  const voice = PIPER_VOICES[language]
-  if (!voice) return Promise.reject(new Error(`pas encore de voix Piper pour « ${ESPEAK_LANGUAGES[language].label} »`))
+/** Loads (once) a Piper voice's model; `onProgress` follows its download. */
+export function loadPiperVoice(voice: PiperVoiceInfo, onProgress?: (fraction: number) => void): Promise<PiperVoice> {
   let loading = voices.get(voice.id)
   if (!loading) {
     const sources = (file: string) => [`voices/${voice.id}/${file}`, `${PIPER_VOICE_BASE}/${voice.path}/${file}`]
@@ -62,20 +60,29 @@ export function loadPiperVoice(language: Language, onProgress?: (fraction: numbe
 }
 
 /** Speech of `text` with an engine other than WaxVocoder's own, robot stage included. */
+export type SynthesisOptions = {
+  /** The Piper voice; by default the language's first. */
+  voice?: PiperVoiceInfo
+  /** Follows the download of a Piper voice. */
+  onProgress?: (fraction: number) => void
+}
+
 export async function synthesize(
   engine: Exclude<EngineName, 'waxvocoder'>,
   text: string,
   language: Language,
   transcriber: EspeakTranscriber,
   robot: RobotSettings,
-  onProgress?: (fraction: number) => void,
+  options: SynthesisOptions = {},
 ): Promise<Speech> {
   let speech: Speech
   if (engine === 'espeak') {
     speech = espeakSpeech(transcriber.worker, ESPEAK_LANGUAGES[language].voice, text)
   } else {
-    const voice = await loadPiperVoice(language, onProgress)
-    const samples = await voice.speak(piperPhonemes(transcriber.worker, voice.config.espeak.voice, text))
+    const choice = options.voice ?? piperVoicesFor(language)[0]
+    if (!choice) throw new Error(`pas encore de voix Piper pour « ${ESPEAK_LANGUAGES[language].label} »`)
+    const voice = await loadPiperVoice(choice, options.onProgress)
+    const samples = await voice.speak(piperPhonemes(transcriber.worker, voice.config.espeak.voice, text), { speaker: choice.speaker })
     speech = { samples, sampleRate: voice.sampleRate }
   }
   return { samples: robotize(speech, robot), sampleRate: speech.sampleRate }

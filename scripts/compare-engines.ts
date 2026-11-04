@@ -7,7 +7,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import EspeakInitializer from '@echogarden/espeak-ng-emscripten'
 import initialize, { VoiceEngine } from '../src/wasm/voice-engine/voice_engine.js'
 import { encodeWav } from '../src/audio/wav.ts'
-import { espeakSpeech, PIPER_VOICES, resample, robotize, robotSettings, type Speech } from '../src/engines/index.ts'
+import { espeakSpeech, piperVoicesFor, resample, robotize, robotSettings, type Speech } from '../src/engines/index.ts'
 import { type PiperConfig, piperPhonemes, PiperVoice } from '../src/engines/piper.ts'
 import { loadEspeak } from '../src/espeak.ts'
 import { applySettings, DEFAULT_SETTINGS, PRESETS, type VoiceSettings } from '../src/voice-settings.ts'
@@ -18,7 +18,7 @@ const [out = 'ecoute/moteurs', text = 'Kaos, il se levait tous les matins à qua
 await initialize({ module_or_path: await WebAssembly.compile(await readFile(new URL('../src/wasm/voice-engine/voice_engine_bg.wasm', import.meta.url))) })
 const transcriber = await loadEspeak()
 const worker = new (await EspeakInitializer()).eSpeakNGWorker()
-const voice = PIPER_VOICES.fr!
+const voice = piperVoicesFor('fr')[0]
 const folder = new URL(`../voices/${voice.id}/`, import.meta.url)
 const config = JSON.parse(await readFile(new URL(`${voice.id}.onnx.json`, folder), 'utf8')) as PiperConfig
 const piper = await PiperVoice.load(await import('onnxruntime-web'), await readFile(new URL(`${voice.id}.onnx`, folder)), config)

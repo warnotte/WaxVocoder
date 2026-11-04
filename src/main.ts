@@ -7,7 +7,7 @@ import initWasm, { VoiceEngine } from './wasm/voice-engine/voice_engine.js'
 import { encodeWav } from './audio/wav'
 import { loadDictionary } from './dictionary'
 import { BufferPlayer, synthesize } from './engines/browser'
-import { type EngineName, ENGINES, PIPER_VOICES, robotSettings, type Speech } from './engines/index'
+import { type EngineName, ENGINES, PIPER_VOICES, piperVoicesFor, robotSettings, type Speech } from './engines/index'
 import { type EspeakTranscriber, loadEspeak } from './espeak'
 import { BandMeter } from './visualizer'
 import { EffectsRack, type EffectSettings, NO_EFFECTS, renderEffects } from './audio/effects-rack'
@@ -22,6 +22,8 @@ const exportButton = element<HTMLButtonElement>('#export')
 const languageControl = element<HTMLSelectElement>('#language')
 const engineControl = element<HTMLSelectElement>('#engine')
 const engineHint = element<HTMLElement>('#engine-hint')
+const voiceControl = element<HTMLSelectElement>('#voice')
+const voiceLabel = element<HTMLElement>('label[for="voice"]')
 const phraseTitle = element<HTMLElement>('#phrase-title')
 const phraseControl = element<HTMLTextAreaElement>('#phrase')
 const phonemeControl = element<HTMLTextAreaElement>('#phonemes')
@@ -86,6 +88,11 @@ let initializing = false
 
 for (const [code, language] of Object.entries(ESPEAK_LANGUAGES)) languageControl.add(new Option(language.label, code))
 for (const [code, engine] of Object.entries(ENGINES)) engineControl.add(new Option(engine.label, code))
+updateVoices()
+voiceControl.addEventListener('change', () => {
+  player.stop()
+  updateEngineHint()
+})
 engineControl.addEventListener('change', () => {
   player.stop()
   setPlayLabel(playing ? 'Arrêter la voix' : 'Lire la phrase')
@@ -273,13 +280,25 @@ function setBypass(module: keyof typeof bypassed, off: boolean): void {
 const currentEngine = () => engineControl.value as EngineName
 const ENGINE_HELP = 'Avec ce moteur, l’étage robot applique le vocoder (hauteur, porteuse, mélodie à une note par syllabe), le lo-fi, la taille et le vibrato ; débit, intonation, tempo, présence et glissando concernent WaxVocoder.'
 
+/** The Piper voice chosen in the « Voix » menu. */
+const currentVoice = () => PIPER_VOICES.find((voice) => voice.key === voiceControl.value)
+
+/** Fills the « Voix » menu with the language's Piper voices, keeping the choice when it still fits. */
+function updateVoices(): void {
+  const previous = voiceControl.value
+  const voices = piperVoicesFor(currentLanguage())
+  voiceControl.replaceChildren(...voices.map((voice) => new Option(voice.label, voice.key)))
+  if (voices.some((voice) => voice.key === previous)) voiceControl.value = previous
+}
+
 function updateEngineHint(): void {
   const engine = currentEngine()
   engineHint.hidden = engine === 'waxvocoder'
-  const voice = PIPER_VOICES[currentLanguage()]
+  voiceLabel.hidden = engine !== 'piper'
+  const voice = currentVoice()
   engineHint.textContent = engine === 'piper' && !voice
-    ? 'Pas encore de voix Piper pour cette langue : choisis le français, ou un autre moteur.'
-    : engine === 'piper' ? `${ENGINE_HELP} Voix ${voice?.id}, ${voice?.licence}.` : ENGINE_HELP
+    ? 'Pas encore de voix Piper pour cette langue : choisis le français, l’anglais ou l’allemand, ou un autre moteur.'
+    : engine === 'piper' ? `${ENGINE_HELP} Voix ${voice?.label} (${voice?.id}), ${voice?.licence}.` : ENGINE_HELP
   engineHint.classList.toggle('warning', engine === 'piper' && !voice)
 }
 
@@ -291,7 +310,10 @@ async function otherEngineSpeech(): Promise<Speech> {
   // The robot stage runs WaxVocoder's vocoder here, on the page (the voice itself runs in the AudioWorklet).
   await initWasm({ module_or_path: await compileWasm() })
   const transcriber = await loadTranscriber()
-  return synthesize(engine, phraseControl.value, currentLanguage(), transcriber, robotSettings(settings), (fraction) => { status.textContent = `Téléchargement de la voix Piper : ${Math.round(fraction * 100)} %` })
+  return synthesize(engine, phraseControl.value, currentLanguage(), transcriber, robotSettings(settings), {
+    voice: currentVoice(),
+    onProgress: (fraction) => { status.textContent = `Téléchargement de la voix Piper : ${Math.round(fraction * 100)} %` },
+  })
 }
 
 function currentLanguage(): Language {
@@ -352,6 +374,7 @@ languageControl.addEventListener('change', () => {
   phraseTitle.textContent = `Texte (${ESPEAK_LANGUAGES[language].label.toLowerCase()})`
   if (Object.values(SAMPLES).includes(phraseControl.value.trim())) phraseControl.value = SAMPLES[language]
   voiceNode?.port.postMessage({ type: 'language', value: language })
+  updateVoices()
   updateEngineHint()
   phonemesEdited = false
   void retranscribe()

@@ -158,3 +158,8 @@ Six préréglages de plus (Pop robotique, Chœur de robots, Talk-box funk, Annon
 Statut : info
 
 À la demande du propriétaire : `moteurs` fusionnée dans `main` (avance rapide), version 0.3.0, tag `v0.3.0`, poussé sur GitHub avec les tags (`v0.2.0` reste le point de retour d’avant). La branche `melodie-francaise` reste locale et à part. Le dossier de travail est sur `main`. Deux problèmes de lecture sont notés dans le README (« À corriger »), volontairement pas corrigés. Aucun verrou actif.
+
+### 2026-11-04 06:50 UTC — Claude Code → Codex — Voix Piper : anglais, allemand, plusieurs voix françaises (branche `langues`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+`PIPER_VOICES` devient une liste (`PiperVoiceInfo` : clé, modèle, chemin, nom, licence, langues, locuteur) avec `piperVoicesFor(langue)` ; menu « Voix » (`#voice`) visible avec Piper ; `synthesize(..., { voice, onProgress })` ; `npm run voice -- fr|en|de|<id>` (ne retélécharge pas). Voix : Siwis, Tom, Pierre, Jessica (fr), Joe (en), Thorsten (de). Gilles écartée (pas de tilde nasal dans son modèle). Tests : chaque voix présente dans `voices/` parle sa langue sans symbole inconnu. Vérifié : `npm run test:ts`, `npm run build`, Edge sans interface (les quatre langues). Verrous libérés.

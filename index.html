@@ -40,6 +40,10 @@
           Moteur
           <select id="engine"></select>
         </label>
+        <label class="select-control" for="voice" hidden title="Voix Piper de la langue choisie, téléchargée au premier usage.">
+          Voix
+          <select id="voice"></select>
+        </label>
       </div>
 
       <section class="display" aria-label="Phrase à dire">
@@ -200,9 +204,11 @@
           (<a href="https://github.com/warnotte/WaxVocoder/blob/main/src/data/CMUDICT_LICENSE.txt">licence de type BSD</a>).
         </p>
         <p>
-          Moteur Piper : ONNX Runtime Web (<a href="assets/onnxruntime-web.LICENSE.txt">MIT</a>), voix française « siwis »
-          (<a href="https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR/siwis">SIWIS</a>, université d’Édimbourg,
-          <a href="https://creativecommons.org/licenses/by/4.0/deed.fr">CC BY 4.0</a>).
+          Moteur Piper : ONNX Runtime Web (<a href="assets/onnxruntime-web.LICENSE.txt">MIT</a>) et les voix de
+          <a href="https://huggingface.co/rhasspy/piper-voices">rhasspy/piper-voices</a> : Siwis (SIWIS, université d’Édimbourg,
+          <a href="https://creativecommons.org/licenses/by/4.0/deed.fr">CC BY 4.0</a>), Tom (Tjiho,
+          <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a>), Pierre et Jessica (UPMC, MaryTTS,
+          <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr">CC BY-SA 4.0</a>), Joe et Thorsten (CC0).
           Polices Michroma et Barlow Semi Condensed (<a href="https://openfontlicense.org">SIL OFL 1.1</a>).
         </p>
       </footer>

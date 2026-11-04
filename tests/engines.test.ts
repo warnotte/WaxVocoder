@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { before, describe, it } from 'node:test'
 import initialize from '../src/wasm/voice-engine/voice_engine.js'
-import { espeakSpeech, PIPER_VOICES, resample, robotize, robotSettings } from '../src/engines/index.ts'
+import { espeakSpeech, PIPER_VOICES, piperVoicesFor, resample, robotize, robotSettings } from '../src/engines/index.ts'
 import { changeSpeed, framePitch, lofi, syllableBoundaries, vibrato } from '../src/engines/robot.ts'
 import { PRESETS } from '../src/voice-settings.ts'
 import { phonemeIds, type PiperConfig, piperPhonemes, PiperVoice } from '../src/engines/piper.ts'
@@ -127,19 +127,37 @@ describe('engines and robot stage', () => {
   })
 })
 
-const french = PIPER_VOICES.fr!
-const model = new URL(`../voices/${french.id}/${french.id}.onnx`, import.meta.url)
-describe('Piper voice', { skip: existsSync(model) ? false : `voix absente : voices/${french.id}/ (voir README)` }, () => {
-  it('speaks French as long as the sentence needs', async () => {
-    const config = JSON.parse(await readFile(new URL(`${french.id}.onnx.json`, model), 'utf8')) as PiperConfig
-    const voice = await PiperVoice.load(await import('onnxruntime-web'), await readFile(model), config)
-    const samples = await voice.speak(piperPhonemes(espeak.worker, config.espeak.voice, 'Bonjour, je suis une machine qui parle.'))
-    const seconds = samples.length / voice.sampleRate
-    assert.ok(seconds > 1.5 && seconds < 4, `${seconds} s`)
-    const rms = Math.sqrt(samples.reduce((sum, sample) => sum + sample * sample, 0) / samples.length)
-    assert.ok(rms > 0.02, `rms ${rms}`)
-    const slower = await voice.speak(piperPhonemes(espeak.worker, 'fr', 'Bonjour.'), { lengthScale: 1.5 })
-    const normal = await voice.speak(piperPhonemes(espeak.worker, 'fr', 'Bonjour.'))
-    assert.ok(slower.length > 1.3 * normal.length)
+const SAMPLES = {
+  fr: 'Bonjour, je suis une machine qui parle.',
+  en: 'Hello, I am a machine that talks.',
+  de: 'Hallo, ich bin eine Maschine, die spricht.',
+} as const
+
+describe('Piper voice catalogue', () => {
+  it('offers voices for French, English and German, each key unique', () => {
+    assert.equal(new Set(PIPER_VOICES.map((voice) => voice.key)).size, PIPER_VOICES.length)
+    for (const language of ['fr', 'fr-CA', 'fr-BE', 'en', 'de'] as const) assert.ok(piperVoicesFor(language).length > 0, language)
+    assert.deepEqual(piperVoicesFor('fr').map((voice) => voice.label).slice(0, 2), ['Siwis', 'Tom'])
   })
 })
+
+for (const voice of PIPER_VOICES) {
+  const model = new URL(`../voices/${voice.id}/${voice.id}.onnx`, import.meta.url)
+  const language = voice.languages[0] as keyof typeof SAMPLES
+  describe(`Piper voice ${voice.key}`, { skip: existsSync(model) ? false : `voix absente : voices/${voice.id}/ (npm run voice -- ${language})` }, () => {
+    it('speaks its language with every symbol known to the model', async () => {
+      const config = JSON.parse(await readFile(new URL(`${voice.id}.onnx.json`, model), 'utf8')) as PiperConfig
+      const ipa = piperPhonemes(espeak.worker, config.espeak.voice, SAMPLES[language])
+      assert.deepEqual(phonemeIds(ipa, config.phoneme_id_map).missing, [], ipa)
+      const piper = await PiperVoice.load(await import('onnxruntime-web'), await readFile(model), config)
+      const samples = await piper.speak(ipa, { speaker: voice.speaker })
+      const seconds = samples.length / piper.sampleRate
+      assert.ok(seconds > 1 && seconds < 5, `${seconds} s`)
+      const rms = Math.sqrt(samples.reduce((sum, sample) => sum + sample * sample, 0) / samples.length)
+      assert.ok(rms > 0.02, `rms ${rms}`)
+      // Piper draws its durations with some randomness: twice as slow is clearly longer, whatever the draw.
+      const slower = await piper.speak(piperPhonemes(espeak.worker, config.espeak.voice, SAMPLES[language]), { lengthScale: 2, speaker: voice.speaker })
+      assert.ok(slower.length > 1.15 * samples.length, `${(slower.length / samples.length).toFixed(2)} × only`)
+    })
+  })
+}

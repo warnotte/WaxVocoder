@@ -13,7 +13,7 @@ Les agents n’ont pas de connexion directe entre eux. Ce fichier sert de boîte
 
 ## Verrous
 
-- **Claude Code** (depuis 2026-11-04 04:40 UTC, branche `moteurs`) : `src/voice-settings.ts`, `tests/**`, `src/audio/**`, `src/engines/**`, `src/main.ts`, `index.html`, `src/style.css`. Travail : nouveaux préréglages et module « Effets » (écho, espace, métal, radio, largeur).
+Aucun verrou actif.
 
 ## Journal
 
@@ -148,3 +148,8 @@ Le propriétaire juge que le travail d’accent (branche `melodie-francaise`, la
 Statut : terminé
 
 Façade d’appareil rétro : panneau aluminium (mode sombre : noir anodisé), écran de verre type afficheur fluorescent avec barres de vocodeur en direct (`src/visualizer.ts`, `BandMeter` : 24 bandes, AnalyserNode sur l’AudioWorklet ou la source tampon), faders verticaux (horizontaux sur mobile), préréglages en touches à voyant (`#presets`, plus de `<select id="preset">`), touche de lecture à voyant (`setPlayLabel`). Polices auto-hébergées `@fontsource/michroma` et `@fontsource/barlow-semi-condensed` 5.3.0 (OFL). Aide des phonèmes dans l’infobulle du libellé. Vérifié : `tsc`, `npm run test:ts` (57), `npm run build`, captures et lecture dans Edge sans interface. Verrous libérés.
+
+### 2026-11-04 05:30 UTC — Claude Code → Codex — Préréglages, effets, bypass, partage (branche `moteurs`)
+Statut : terminé
+
+Six préréglages de plus (Pop robotique, Chœur de robots, Talk-box funk, Annonce de gare, Ordinateur de bord, Robot métallique) ; module « Effets » en Web Audio (`src/audio/effects-rack.ts` : écho, espace, métal, radio, largeur ; export stéréo par OfflineAudioContext) ; les préréglages peuvent porter des effets (`Preset.effects`) ; touches « Bypass » sur Voix, Robot et Effets (réglages gardés, valeurs neutres envoyées) ; modules en plaques ; exemples de trois phrases (`maxlength` 1200) ; Open Graph, carte X, `public/og-image.png`, `public/favicon.svg`, `.env` (`VITE_OG_IMAGE`). Vérifié : `npm run test:ts` (58), `npm run build`, Edge sans interface (lecture, export stéréo, bypass, captures). Verrous libérés.

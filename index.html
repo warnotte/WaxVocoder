@@ -7,6 +7,22 @@
     <meta name="theme-color" content="#2a2c2e" media="(prefers-color-scheme: dark)" />
     <meta name="description" content="Synthétiseur de voix et vocoder : tape une phrase, choisis une voix, fais-la parler ou chanter au robot." />
     <title>Wax Vocoder</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <!-- Partage sur les réseaux (Open Graph, cartes X / Twitter). L'image doit avoir une adresse absolue : VITE_OG_IMAGE dans .env. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Wax Vocoder" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="Wax Vocoder, synthétiseur de voix et vocoder" />
+    <meta property="og:description" content="Tape une phrase, choisis une voix et fais-la parler ou chanter au robot, directement dans le navigateur. Logiciel libre." />
+    <meta property="og:image" content="%VITE_OG_IMAGE%" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Façade du Wax Vocoder : un écran vert lumineux avec les barres du vocoder et une phrase." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Wax Vocoder, synthétiseur de voix et vocoder" />
+    <meta name="twitter:description" content="Tape une phrase, choisis une voix et fais-la parler ou chanter au robot, directement dans le navigateur." />
+    <meta name="twitter:image" content="%VITE_OG_IMAGE%" />
   </head>
   <body>
     <main class="instrument">
@@ -29,9 +45,9 @@
       <section class="display" aria-label="Phrase à dire">
         <canvas id="meter" class="meter" aria-hidden="true"></canvas>
         <label id="phrase-title" class="display-label" for="phrase">Texte (anglais)</label>
-        <textarea id="phrase" rows="2" maxlength="240">Hello, I am a talking machine.</textarea>
+        <textarea id="phrase" rows="3" maxlength="1200">Hello, I am Wax Vocoder, a machine that talks and sings. Type your own words here, pick a voice, and press play. I can sound like a talking toy from nineteen eighty, or sing with a whole choir of robots.</textarea>
         <label class="display-label" for="phonemes">Phonèmes, modifiables</label>
-        <textarea id="phonemes" rows="2" spellcheck="false">HH AH0 L OW1 , AY1 | AE1 M | AH0 | T AO1 K IH0 NG | M AH0 SH IY1 N .</textarea>
+        <textarea id="phonemes" rows="2" spellcheck="false">HH AH0 L OW1 , AY1 | AE1 M | W AE1 K S | V AA1 K AA0 D ER0 , AH0 | M AH0 SH IY1 N | DH AE1 T | T AO1 K S | AH0 N D | S IH1 NG Z . T AY1 P | Y AO1 R | OW1 N | W ER1 D Z | HH IY1 R , P IH1 K | AH0 | V OY1 S , AH0 N D | P R EH1 S | P L EY1 . AY1 | K AE1 N | S AW1 N D | L AY1 K | AH0 | T AO1 K IH0 NG | T OY1 | F R AH1 M | N AY1 N T IY1 N | EY1 T IY0 , AO1 R | S IH1 NG | W IH1 DH | AH0 | HH OW1 L | K W AY1 ER0 | AH1 V | R OW1 B AA2 T S .</textarea>
         <p id="phoneme-hint" class="display-hint"></p>
         <p id="engine-hint" class="display-hint" hidden></p>
         <div class="display-foot">
@@ -47,14 +63,17 @@
         <button id="export" type="button" class="key key-quiet">Exporter WAV</button>
       </div>
 
-      <section class="presets" aria-labelledby="presets-title">
+      <section class="presets module" aria-labelledby="presets-title">
         <h2 id="presets-title">Préréglages</h2>
         <div id="presets" class="preset-keys" role="group" aria-labelledby="presets-title"></div>
       </section>
 
       <div class="modules">
         <section class="module" aria-labelledby="voice-title">
-          <h2 id="voice-title">Voix</h2>
+          <div class="module-head">
+            <h2 id="voice-title">Voix</h2>
+            <button type="button" class="bypass" data-bypass="voice" aria-pressed="false" title="Bypass : la voix par défaut, sans perdre tes réglages"><span class="led" aria-hidden="true"></span>Bypass</button>
+          </div>
           <div class="faders">
             <label class="fader" for="pitch">
               <output id="pitch-value" for="pitch">110 Hz</output>
@@ -80,7 +99,10 @@
         </section>
 
         <section class="module module-robot" aria-labelledby="robot-title">
-          <h2 id="robot-title">Robot</h2>
+          <div class="module-head">
+            <h2 id="robot-title">Robot</h2>
+            <button type="button" class="bypass" data-bypass="robot" aria-pressed="false" title="Bypass : sans vocoder, tempo, lo-fi, taille, vibrato ni mélodie, sans perdre tes réglages"><span class="led" aria-hidden="true"></span>Bypass</button>
+          </div>
           <div class="faders">
             <label class="fader" for="vocoder">
               <output id="vocoder-value" for="vocoder">0 %</output>
@@ -128,7 +150,10 @@
         </section>
 
         <section class="module module-effects" aria-labelledby="effects-title">
-          <h2 id="effects-title">Effets</h2>
+          <div class="module-head">
+            <h2 id="effects-title">Effets</h2>
+            <button type="button" class="bypass" data-bypass="effects" aria-pressed="false" title="Bypass : la voix sans effets, sans perdre tes réglages"><span class="led" aria-hidden="true"></span>Bypass</button>
+          </div>
           <div class="faders">
             <label class="fader" for="echo">
               <output id="echo-value" for="echo">0 %</output>

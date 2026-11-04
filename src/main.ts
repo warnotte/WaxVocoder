@@ -62,11 +62,11 @@ element<HTMLLabelElement>('label[for="phonemes"]').title = PHONEME_HELP
 const MELODY_HELP = 'Notes anglaises (C3, D#3, Bb2 ; A4 = 440 Hz) ou françaises (do2, ré#2, sib1 ; la3 = 440 Hz), une par voyelle, en boucle. Vide : intonation parlée.'
 
 const SAMPLES: Record<Language, string> = {
-  en: 'Hello, I am a talking machine.',
-  fr: 'Bonjour, je suis une machine qui parle.',
-  'fr-CA': 'Salut, je suis une machine qui jase. Il fait frette à matin.',
-  'fr-BE': 'Bonjour, je suis une machine qui parle nonante fois par jour.',
-  de: 'Hallo, ich bin eine sprechende Maschine.',
+  en: 'Hello, I am Wax Vocoder, a machine that talks and sings. Type your own words here, pick a voice, and press play. I can sound like a talking toy from nineteen eighty, or sing with a whole choir of robots.',
+  fr: 'Bonjour, je suis Wax Vocoder, une machine qui parle et qui chante. Écris ton texte ici, choisis une voix, puis appuie sur Lire. Je peux parler comme un jouet des années quatre-vingt, ou chanter avec tout un chœur de robots.',
+  'fr-CA': 'Salut, je suis Wax Vocoder, une machine qui jase pis qui chante. Écris ton texte ici, choisis une voix, pis appuie sur Lire. Il fait frette à matin, mais mes circuits sont ben au chaud.',
+  'fr-BE': 'Bonjour, je suis Wax Vocoder, une machine qui parle et qui chante. Écris ton texte ici, choisis une voix, puis appuie sur Lire. Je compte jusqu’à septante, et même jusqu’à nonante, sans me tromper, une fois !',
+  de: 'Hallo, ich bin Wax Vocoder, eine Maschine, die spricht und singt. Schreib deinen Text hier hinein, wähle eine Stimme und hör mir zu. Ich klinge wie ein sprechendes Spielzeug aus den Achtzigern oder wie ein ganzer Chor von Robotern.',
 }
 
 let lexicon: Lexicon | undefined
@@ -105,6 +105,8 @@ for (const [name, preset] of Object.entries(PRESETS)) {
   key.innerHTML = '<span class="led" aria-hidden="true"></span>'
   key.append(preset.label)
   key.addEventListener('click', () => {
+    // A preset is heard whole: every module back in the signal.
+    for (const module of ['voice', 'robot', 'effects'] as const) setBypass(module, false)
     showSettings(preset.settings)
     showEffects({ ...NO_EFFECTS, ...preset.effects })
     sendAllSettings()
@@ -120,6 +122,13 @@ function setPlayLabel(text: string): void {
 }
 CHORDS.forEach((label, index) => chordControl.add(new Option(label, String(index))))
 
+/** Modules switched off with their bypass key: their controls keep their values but act as neutral. */
+const bypassed = { voice: false, robot: false, effects: false }
+const NEUTRAL_ROBOT: Partial<VoiceSettings> = {
+  vocoder: 0, tempo: 0, lofi: 0, formantShift: 1, vibrato: 0, glide: 0, melody: '', quantize: false,
+}
+
+/** What the voice uses: the controls, with bypassed modules neutral. */
 function currentSettings(): VoiceSettings {
   const settings: VoiceSettings = {
     ...DEFAULT_SETTINGS,
@@ -128,6 +137,11 @@ function currentSettings(): VoiceSettings {
     quantize: quantizeControl.checked,
   }
   for (const { name, input } of sliders) settings[name] = Number(input.value)
+  if (bypassed.voice) {
+    const { frequency, rate, intonation, presence } = DEFAULT_SETTINGS
+    Object.assign(settings, { frequency, rate, intonation, presence })
+  }
+  if (bypassed.robot) Object.assign(settings, NEUTRAL_ROBOT)
   return settings
 }
 
@@ -194,7 +208,7 @@ function rackFor(context: AudioContext): EffectsRack {
   let rack = racks.get(context)
   if (!rack) {
     rack = new EffectsRack(context)
-    rack.setNow(effects)
+    rack.setNow(activeEffects())
     rack.output.connect(context.destination)
     meter.attach(context, rack.output)
     racks.set(context, rack)
@@ -221,19 +235,40 @@ const effectSliders: Array<{ name: keyof EffectSettings; input: HTMLInputElement
   format: format as (value: number) => string,
 }))
 
+/** The effects heard: none while the module is bypassed. */
+const activeEffects = (): EffectSettings => (bypassed.effects ? { ...NO_EFFECTS } : effects)
+
 function showEffects(next: EffectSettings): void {
   effects = { ...next }
   for (const { name, input, output, format } of effectSliders) {
     input.value = String(effects[name])
     output.value = format(effects[name])
   }
-  for (const rack of racks.values()) rack.set(effects)
+  for (const rack of racks.values()) rack.set(activeEffects())
 }
 
 /** The voice of an export through the effects: stereo, with the echo and reverberation tails. */
 async function withEffects(samples: Float32Array, sampleRate: number): Promise<Float32Array[]> {
-  const silent = Object.entries(effects).every(([name, value]) => name === 'echoTime' || value === 0)
-  return silent ? [samples] : renderEffects(samples, sampleRate, effects)
+  const heard = activeEffects()
+  const silent = Object.entries(heard).every(([name, value]) => name === 'echoTime' || value === 0)
+  return silent ? [samples] : renderEffects(samples, sampleRate, heard)
+}
+
+/** A module's bypass key: lit while the module is in the signal, dark (and the module dimmed) when bypassed. */
+for (const key of document.querySelectorAll<HTMLButtonElement>('button[data-bypass]')) {
+  const module = key.dataset.bypass as keyof typeof bypassed
+  key.addEventListener('click', () => setBypass(module, !bypassed[module]))
+}
+function setBypass(module: keyof typeof bypassed, off: boolean): void {
+  bypassed[module] = off
+  const key = element<HTMLButtonElement>(`button[data-bypass="${module}"]`)
+  key.setAttribute('aria-pressed', String(off))
+  key.closest('.module')?.classList.toggle('is-bypassed', off)
+  if (module === 'effects') {
+    for (const rack of racks.values()) rack.set(activeEffects())
+  } else {
+    sendAllSettings()
+  }
 }
 const currentEngine = () => engineControl.value as EngineName
 const ENGINE_HELP = 'Avec ce moteur, l’étage robot applique le vocoder (hauteur, porteuse, mélodie à une note par syllabe), le lo-fi, la taille et le vibrato ; débit, intonation, tempo, présence et glissando concernent WaxVocoder.'
@@ -332,7 +367,7 @@ rhythmControl.addEventListener('change', sendPhonemes)
 for (const { name, input, output, format } of sliders) {
   input.addEventListener('input', () => {
     output.value = format(Number(input.value))
-    sendSetting(name, Number(input.value))
+    sendSetting(name, currentSettings()[name])
     markCustom()
   })
 }
@@ -344,16 +379,16 @@ for (const { name, input, output, format } of effectSliders) {
   })
 }
 chordControl.addEventListener('change', () => {
-  sendSetting('chord', Number(chordControl.value))
+  sendSetting('chord', currentSettings().chord)
   markCustom()
 })
 melodyControl.addEventListener('input', () => {
   updateMelodyHint()
-  sendSetting('melody', melodyControl.value.trim())
+  sendSetting('melody', currentSettings().melody)
   markCustom()
 })
 quantizeControl.addEventListener('change', () => {
-  sendSetting('quantize', quantizeControl.checked)
+  sendSetting('quantize', currentSettings().quantize)
   markCustom()
 })
 

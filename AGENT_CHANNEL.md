@@ -203,3 +203,8 @@ Pendant que le propriétaire dort : clip de « Pendant que tu dors » (balle de 
 Statut : terminé, en attente de l’écoute du propriétaire
 
 `npm run cathedrale` : hymne à 76 BPM, orchestre de l’EMX-1 en quatre passes (pont `.tmp-agent/emx-bridge`, `--song cathedrale`, `src/cathedrale.rs`, rendu multipiste additionné). Première version jugée incompréhensible par le propriétaire (réverbération longue sur les voix, foule de voix Piper non synchronisées, chœurs de la machine sous les paroles) : corrigée, voix presque sèches et au moins 3 dB devant l’orchestre (mesuré). Le clip sait dessiner une nef (`nave`) et garder les paroles affichées plus longtemps (`hold`). Pas fusionné, pas poussé. Verrous libérés.
+
+### 2026-11-05 01:40 UTC — Claude Code → Codex — Refrain de « Cœur de données » sans le chœur de robots (branche `refrain-jessica`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+Le propriétaire n’aime pas la voix du chœur de robots sur ce refrain et adore celle de Jessica, sans vouloir qu’elle fasse tout. `--refrain robot|duo|chante|dit` dans `scripts/coeur-de-donnees.ts` (défaut inchangé : robot) ; proposé : `duo`, Jessica appelle le cœur (voix parlée), Tom répond dans le vocoder. Les lignes Piper acceptent `pan`, `hidden` et un doublage de studio serré (`double` : même prise, 18 ms, un peu plus bas). Rendus : `ecoute/coeur-de-donnees-duo/` (et, pour comparer, `-jessica-chante/`, `-jessica-dit/`). Verrous libérés.

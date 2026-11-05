@@ -35,7 +35,16 @@ const cliArguments = process.argv.slice(2)
  */
 const backingIndex = cliArguments.indexOf('--backing')
 const backingPath = backingIndex >= 0 ? cliArguments[backingIndex + 1] : undefined
-const outputDirectory = cliArguments.find((argument, index) => !argument.startsWith('--') && (backingIndex < 0 || index !== backingIndex + 1)) ?? 'ecoute/coeur-de-donnees'
+/**
+ * `--refrain robot|duo|chante|dit` : le chœur de robots (par défaut) ; un dialogue où Jessica appelle
+ * le cœur (voix parlée) et Tom, la machine, lui répond dans le vocoder ; Jessica qui chante tout le
+ * refrain ; Jessica qui le dit.
+ */
+const refrainIndex = cliArguments.indexOf('--refrain')
+const refrainStyle = refrainIndex >= 0 ? cliArguments[refrainIndex + 1] : 'robot'
+if (!['robot', 'duo', 'chante', 'dit'].includes(refrainStyle)) throw new Error(`--refrain ${refrainStyle} : robot, duo, chante ou dit`)
+const optionValues = new Set([backingIndex, refrainIndex].filter((index) => index >= 0).map((index) => index + 1))
+const outputDirectory = cliArguments.find((argument, index) => !argument.startsWith('--') && !optionValues.has(index)) ?? 'ecoute/coeur-de-donnees'
 
 // ─── Harmonie et forme ────────────────────────────────────────────────────
 
@@ -103,6 +112,10 @@ type Line = {
   double?: boolean
   clear?: boolean
   piper?: PiperPart
+  /** Place dans la stéréo, de -1 (gauche) à 1 (droite). */
+  pan?: number
+  /** Voix d'appoint (un doublage) : absente des paroles affichées. */
+  hidden?: boolean
 }
 
 const sung = (bar: number, language: Language, text: string, voice: string, melody: string): Line =>
@@ -119,9 +132,21 @@ const CHORUS_LINES: Array<[Array<[Language, string]>, string]> = [
   [[['fr', 'cœur de données, cœur de données,']], 'F3 F3 A3 F3 E3 E3 F3 D3'],
   [[['fr', 'l’avenir brille sans savoir.']], 'D3 F3 F3 E3 D3 D3'],
 ]
-const chorus = (start: number, shift = 0): Line[] => CHORUS_LINES.map(([segments, melody], index) => ({
-  bar: start + 2 * index, segments, voice: CHORUS_VOICE, melody: transpose(melody, shift), gain: 1.1, legato: true, double: true,
-}))
+const chorus = (start: number, shift = 0): Line[] => CHORUS_LINES.flatMap(([segments, melody], index): Line[] => {
+  const bar = start + 2 * index
+  const tune = transpose(melody, shift)
+  if (refrainStyle === 'robot') return [{ bar, segments, voice: CHORUS_VOICE, melody: tune, gain: 1.1, legato: true, double: true }]
+  const text = segments.map(([, words]) => words).join(' ')
+  if (refrainStyle === 'duo') {
+    // The person calls the heart, close and almost bare; the machine answers through the vocoder.
+    return index % 2 === 0 ? [{ ...said(bar, text, JESSICA, tune), pan: -0.15 }] : [{ ...sung(bar, 'fr', text, TOM, tune), pan: 0.15, double: true }]
+  }
+  // Jessica : chanté dans le vocoder comme ses couplets, ou dit, presque nu, de près.
+  const take = refrainStyle === 'dit' ? said(bar, text, JESSICA, tune) : sung(bar, 'fr', text, JESSICA, tune)
+  // Doubled like in the studio (the same take, 18 ms later and a hair lower, on the other side):
+  // a second Piper take drifted by up to 0.7 s and smeared the words.
+  return [{ ...take, pan: -0.25, double: true }]
+})
 
 const TOM = 'fr_FR-tom-medium'
 const JESSICA = 'fr_FR-upmc-medium:jessica'
@@ -542,10 +567,12 @@ async function sing(): Promise<{ effects: Track; clear: Track }> {
       const threshold = 0.02 * take.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)
       take = take.subarray(Math.max(0, take.findIndex((sample) => Math.abs(sample) > threshold) - Math.round(0.02 * SR)))
       const peak = take.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)
-      vocals.add(take, line.bar * BAR, (line.gain ?? 1) / Math.max(peak, 1e-3) * 0.6)
+      const level = (line.gain ?? 1) / Math.max(peak, 1e-3) * 0.6
+      vocals.add(take, line.bar * BAR, level, line.pan ?? 0)
+      if (line.double) vocals.add(resample(take, SR * 1.004, SR), line.bar * BAR + 0.018, level * 0.6, -(line.pan ?? 0) || 0.3)
       const length = take.length / SR
       const fits = length <= 2 * BAR ? '' : ` · DÉBORDE (${length.toFixed(2)} s pour ${(2 * BAR).toFixed(2)} s)`
-      timeline.push({ start: line.bar * BAR, end: line.bar * BAR + length, section: BAR_MAP[line.bar].section, style: 'vocodé', voice: info.label, segments: line.segments })
+      if (!line.hidden) timeline.push({ start: line.bar * BAR, end: line.bar * BAR + length, section: BAR_MAP[line.bar].section, style: 'vocodé', voice: info.label, segments: line.segments })
       console.log(`mesure ${String(line.bar + 1).padStart(2)} · ${`${line.segments[0][0]}:${text} (${info.label})`.padEnd(58)} ${length.toFixed(2)} s${fits}`)
       continue
     }

@@ -24,6 +24,7 @@
     "tour": "node scripts/visite-guidee.ts",
     "nuit": "node scripts/pendant-que-tu-dors.ts",
     "cathedrale": "node scripts/cathedrale-de-calcul.ts",
+    "allee": "node scripts/allee-froide.ts",
     "clip": "node scripts/clip.ts"
   },
   "devDependencies": {

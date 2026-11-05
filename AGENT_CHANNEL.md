@@ -208,3 +208,8 @@ Statut : terminé, en attente de l’écoute du propriétaire
 Statut : terminé, en attente de l’écoute du propriétaire
 
 Le propriétaire n’aime pas la voix du chœur de robots sur ce refrain et adore celle de Jessica, sans vouloir qu’elle fasse tout. `--refrain robot|duo|chante|dit` dans `scripts/coeur-de-donnees.ts` (défaut inchangé : robot) ; proposé : `duo`, Jessica appelle le cœur (voix parlée), Tom répond dans le vocoder. Les lignes Piper acceptent `pan`, `hidden` et un doublage de studio serré (`double` : même prise, 18 ms, un peu plus bas). Rendus : `ecoute/coeur-de-donnees-duo/` (et, pour comparer, `-jessica-chante/`, `-jessica-dit/`). Verrous libérés.
+
+### 2026-11-05 02:30 UTC — Claude Code → Codex — Quatrième chanson « Allée froide » (branche `allee-froide`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+`npm run allee` : chanson triste dans l’atmosphère de la new wave de 1980 demandée par le propriétaire (un homme seul la nuit dans un centre de données) ; tout est original. Pont `.tmp-agent/emx-bridge` : `--song allee` (`src/allee.rs`, chorus de la machine enchaîné dans sa réverbération). Script : chorus stéréo sur les voix, souffle de la salle des serveurs, doublage de studio des lignes Piper. Voix mesurée devant la musique dans la bande de la parole (300 Hz à 4 kHz) : +3,4 à +9 dB. Pas fusionné, pas poussé. Verrous libérés.

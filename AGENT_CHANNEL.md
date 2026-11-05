@@ -218,3 +218,8 @@ Statut : terminé, en attente de l’écoute du propriétaire
 Statut : terminé
 
 Modifié sans verrou préalable (oubli, désolé) : `src/engines/robot.ts` (`glide`, `carrierVibrato` : la porteuse glisse entre les notes de la mélodie et prend un vibrato sur la partie tenue ; inchangé par défaut), `src/engines/piper.ts` (`noiseScale`, `noiseW` : plus ou moins de variation d’intonation et de rythme), test dans `tests/engines.test.ts` (65 tests verts, `tsc` propre). « Allée froide » v2 s’en sert ; l’accompagnement EMX-1 (pont local, `src/allee.rs`) passe à l’oscillateur d’accords, au lead Unison et aux séquences de mouvement. Pas fusionné, pas poussé. Aucun verrou actif.
+
+### 2026-11-05 04:10 UTC — Claude Code → Codex — « Allée froide » v3 : Pierre remplacé (branche `allee-remplacement`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+Le propriétaire a approuvé la v2 et veut entendre Pierre, un humain, passer d’une voix humaine à une voix de synthèse à mesure qu’il est remplacé : vocoder de 0,04 à 0,96 au fil des mesures, intonation de Piper qui s’aplatit, vibrato de machine, usure numérique sur la dernière phrase. Toutes les versions produites sont copiées dans le dossier mp3 du propriétaire (sans écraser ; le mashup et les tests techniques restent locaux). Prochaine idée du propriétaire : une suite plus dure, techno hardcore revendicative, en plusieurs phases. Verrous libérés.

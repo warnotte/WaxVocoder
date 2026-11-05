@@ -1,7 +1,8 @@
 // « Allée froide » : quatrième chanson originale de WaxVocoder, une chanson triste.
 // Le dernier technicien de nuit d'un centre de données entièrement automatisé (Pierre)
 // marche une dernière fois dans l'allée froide, le couloir glacé entre les baies de
-// serveurs ; on l'a remercié par un message automatique. La voix du bâtiment (Jessica)
+// serveurs ; on l'a remercié par un message automatique. Sa voix passe peu à peu d'une
+// voix humaine à une voix de synthèse, à mesure que les machines le remplacent. La voix du bâtiment (Jessica)
 // fait ses annonces, calme, comme dans une gare ; au pont, l'annonce passe en anglais,
 // français et allemand (Joe, Jessica, Thorsten). Boîte à rythmes douce de 1980, basse
 // pulsée, nappes dans le chorus, motif mélancolique, arpège qui clignote, souffle des
@@ -109,6 +110,8 @@ type PiperPart = {
   expression?: number
   /** Longest stretch of the line to fill its two bars (slower is more sung). */
   stretch?: number
+  /** Digital wear of the voice (0–1). */
+  lofi?: number
 }
 
 /**
@@ -147,10 +150,33 @@ const announce = (bar: number, language: Language, text: string, voice = JESSICA
   const line = said(bar, language, text, voice, 'E3 E3 E3 E3 E3 E3')
   return { ...line, pan: -0.1, piper: { ...line.piper!, expression: 1.15 } }
 }
-/** Pierre sings rather than says: more vocoder on the notes, notes that slide, a vibrato, a freer voice, slower. */
+/**
+ * How far Pierre has been replaced by the machines, by bar: 0 at his first line (a human voice),
+ * 1 at his last (« Bonne nuit, les machines », a synthetic one).
+ */
+const replaced = (bar: number) => Math.min(1, Math.max(0, (bar - 8) / (64 - 8)))
+/**
+ * Pierre's voice goes from human to synthetic over the song: more and more vocoder on the notes,
+ * an intonation that flattens (less of Piper's own variation), a vibrato that only the machine
+ * has, and at the very end some digital wear.
+ */
 const sings = (bar: number, text: string, melody: string, low = false): Line => {
   const line = sung(bar, 'fr', text, PIERRE, melody)
-  return { ...line, pan: 0.1, piper: { ...line.piper!, mix: 0.62, glide: 0.08, vibrato: 0.3, expression: 1.3, stretch: 1.42, chord: low ? 5 : 0 } }
+  const machine = replaced(bar)
+  return {
+    ...line,
+    pan: 0.1,
+    piper: {
+      ...line.piper!,
+      mix: 0.04 + 0.92 * machine ** 1.2,
+      glide: 0.08,
+      vibrato: 0.3 * machine,
+      expression: 1.35 - 0.85 * machine,
+      stretch: 1.25 + 0.2 * machine,
+      chord: low ? 5 : 0,
+      lofi: 0.3 * machine ** 3,
+    },
+  }
 }
 /** Le refrain, chanté par Pierre, doublé comme en studio (paroles et mélodie originales). */
 const chorus = (start: number): Line[] => [
@@ -471,7 +497,7 @@ async function sing(): Promise<{ effects: Track; clear: Track }> {
       const ratio = room / (samples.length / piper.sampleRate)
       if (ratio < 0.97 || ratio > 1.15) samples = await piper.speak(ipa, { speaker: info.speaker, ...expression, lengthScale: Math.min(part.stretch ?? 1.3, Math.max(0.72, ratio)) })
       const melody = line.piper.melody.split(' ').map((note) => hz(note))
-      const robotic = robotize({ samples, sampleRate: piper.sampleRate }, { mix: part.mix, frequency: melody[0], chord: part.chord ?? 0, melody, glide: part.glide, carrierVibrato: part.vibrato })
+      const robotic = robotize({ samples, sampleRate: piper.sampleRate }, { mix: part.mix, frequency: melody[0], chord: part.chord ?? 0, melody, glide: part.glide, carrierVibrato: part.vibrato, lofi: part.lofi })
       let take = resample(robotic, piper.sampleRate, SR)
       // Leading silence out: the line starts on the bar.
       const threshold = 0.02 * take.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)

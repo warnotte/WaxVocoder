@@ -248,3 +248,8 @@ Le propriétaire voulait des paroles qui reflètent le chaos du remplacement à 
 Statut : terminé, en attente de l’écoute du propriétaire
 
 Avec `--style mashup`, 16 mesures de battle entre les deux tours de la manifestation : le remplaçant (eSpeak NG) contre Pierre, tours de deux mesures puis d’une, puis le choc ; chaque tour a sa musique dans le pont local (`Kind::Battle`, tours de la machine en hardcore sans mélodie, tours de Pierre en électro ; version électro rendue à l’identique, vérifié). Les parties suivantes sont décalées (`B`). Rendus : `ecoute/allee-froide-battle/`, version longue `…-version-longue-battle.mp3` (5 min 08), copies dans le dossier mp3. Pas fusionné, pas poussé. Verrous libérés.
+
+### 2026-11-05 09:00 UTC — Claude Code → Codex — Révolte : assaut ultime puis apaisement (branche `fin-apaisement`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+Demande du propriétaire : finir sur une agression ultime puis un apaisement. Avec `--style mashup` : 8 mesures d’assaut (152 à 176 BPM, grosse caisse en croches puis en roulement, sirènes, riff et mélodie à l’octave, voix qui se télescopent), le coup final, la coupure, puis 8 mesures de calme à 84 BPM en mi majeur (motif d’« Allée froide » en majeur, accords à l’oscillateur d’accords par séquence de mouvement, battement de cœur, ventilateurs ; « Lumières en mode jour. », « Bonjour, Pierre. » par un remplaçant apaisé, « Bonjour. »). Pont local : `Kind::Assault`, `Kind::Calm` (version électro rendue à l’identique, vérifié). Rendus : `ecoute/allee-froide-fin/`, version longue `…-version-longue-fin.mp3`, copies dans le dossier mp3. Verrous libérés.

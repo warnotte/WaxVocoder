@@ -35,7 +35,12 @@ const cliArguments = process.argv.slice(2)
  */
 const backingIndex = cliArguments.indexOf('--backing')
 const backingPath = backingIndex >= 0 ? cliArguments[backingIndex + 1] : undefined
-const outputDirectory = cliArguments.find((argument, index) => !argument.startsWith('--') && (backingIndex < 0 || index !== backingIndex + 1)) ?? 'ecoute/allee-froide-revolte'
+/** `--style electro|mashup` : l'électro (par défaut), ou l'électro qui bascule vers le hardcore à la fin. */
+const styleIndex = cliArguments.indexOf('--style')
+const style = styleIndex >= 0 ? cliArguments[styleIndex + 1] : 'electro'
+if (!['electro', 'mashup'].includes(style)) throw new Error(`--style ${style} : electro ou mashup`)
+const optionValues = new Set([backingIndex, styleIndex].filter((index) => index >= 0).map((index) => index + 1))
+const outputDirectory = cliArguments.find((argument, index) => !argument.startsWith('--') && !optionValues.has(index)) ?? 'ecoute/allee-froide-revolte'
 
 // ─── Harmonie et forme ────────────────────────────────────────────────────
 
@@ -60,7 +65,8 @@ function chord(name: string) {
 
 type Section = 'panne' | 'drop' | 'verse' | 'chant' | 'break' | 'final' | 'fin'
 // Mi mineur (si mineur pour la dominante, couleur modale). Chaque partie a son tempo : la panne
-// accélère de 100 à 126 BPM, la révolte est à 132, en électro sombre et mélodique.
+// accélère de 100 à 126 BPM, la révolte est à 132, en électro sombre et mélodique ; avec
+// `--style mashup`, la fin bascule vers le hardcore (pause qui accélère, dernier refrain à 148).
 const DROP = ['Em', 'Em', 'C', 'C', 'Em', 'Em', 'D', 'Bm']
 const CHANT = ['Em', 'C', 'D', 'Bm', 'Em', 'C', 'D', 'Bm']
 const FORM: Array<[Section, string[], number]> = [
@@ -73,9 +79,11 @@ const FORM: Array<[Section, string[], number]> = [
   ['verse', ['Am', 'Am', 'Em', 'Em', 'Am', 'Am', 'Bm', 'Bm'], 132],
   ['chant', CHANT, 132],
   ['chant', CHANT, 132],
-  ['break', ['C', 'C', 'Bm', 'Bm'], 132],
-  ['final', DROP, 132],
-  ['fin', ['Em', 'Em'], 132],
+  // The mashup (same tempos as the EMX-1's `--song revolte-mashup`): the break speeds up bar
+  // after bar, the hardcore final runs at 148 BPM.
+  ...(style === 'mashup'
+    ? [['break', ['C'], 132], ['break', ['C'], 136], ['break', ['Bm'], 140], ['break', ['Bm'], 144], ['final', DROP, 148], ['fin', ['Em', 'Em'], 148]] as Array<[Section, string[], number]>
+    : [['break', ['C', 'C', 'Bm', 'Bm'], 132], ['final', DROP, 132], ['fin', ['Em', 'Em'], 132]] as Array<[Section, string[], number]>),
 ]
 const BAR_MAP = FORM.flatMap(([section, chords, bpm]) => chords.map((name) => ({ section, chord: chord(name), length: 240 / bpm })))
 const BARS = BAR_MAP.length

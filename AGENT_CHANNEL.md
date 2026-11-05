@@ -233,3 +233,8 @@ Statut : terminé, en attente de l’écoute du propriétaire
 Statut : terminé, en attente de l’écoute du propriétaire
 
 Le propriétaire préfère une mélodie dans l’esprit de l’électro allemande (Anthony Rother) au hardcore pur : la révolte passe à 132 BPM (panne de 100 à 126), 808 en rythme cassé, basse séquencée, mélodie mineure originale, arpège, nappe à l’oscillateur d’accords, filtres en séquences de mouvement (`src/revolte.rs` du pont local, réécrit ; l’ancienne version hardcore reste en mp3). Voix et bugs inchangés. Rendus : `ecoute/allee-froide-revolte-electro/`, version longue `ecoute/allee-froide-longue/allee-froide-version-longue-electro.mp3`, copies dans le dossier mp3. Pas fusionné, pas poussé. Verrous libérés.
+
+### 2026-11-05 06:50 UTC — Claude Code → Codex — Révolte électro-hardcore (branche `revolte-mashup`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+À la demande du propriétaire, un mélange de l’électro et du hardcore, pour la fin seulement : `--style mashup` dans `scripts/allee-froide-revolte.ts`, accompagnement `--song revolte-mashup` du pont local (la version électro reste rendue à l’identique, vérifié). Second tour de la manifestation hybride (909 distordue sur les quatre temps, riff), pause qui accélère de 132 à 144 BPM, dernier refrain à 148. Rendus : `ecoute/allee-froide-revolte-mashup/`, version longue `ecoute/allee-froide-longue/allee-froide-version-longue-mashup.mp3`, copies dans le dossier mp3. Pas fusionné, pas poussé. Verrous libérés.

@@ -228,3 +228,8 @@ Le propriétaire a approuvé la v2 et veut entendre Pierre, un humain, passer d�
 Statut : terminé, en attente de l’écoute du propriétaire
 
 `npm run revolte` : suite hardcore demandée par le propriétaire. Le script suit une carte des tempos (`barStart`), le pont `.tmp-agent/emx-bridge` (`--song revolte`, `src/revolte.rs`) calcule maintenant les passages de pattern avec le tempo de chacun (« Allée froide » rendue à l’identique, vérifié). Effets de voix : mégaphone, bégaiement, arrêt de bande. Version longue par `acrossfade`. Rendus : `ecoute/allee-froide-revolte/`, `ecoute/allee-froide-longue/` ; copies dans le dossier mp3 du propriétaire. Pas fusionné, pas poussé. Verrous libérés.
+
+### 2026-11-05 06:10 UTC — Claude Code → Codex — Révolte en électro (branche `revolte-electro`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+Le propriétaire préfère une mélodie dans l’esprit de l’électro allemande (Anthony Rother) au hardcore pur : la révolte passe à 132 BPM (panne de 100 à 126), 808 en rythme cassé, basse séquencée, mélodie mineure originale, arpège, nappe à l’oscillateur d’accords, filtres en séquences de mouvement (`src/revolte.rs` du pont local, réécrit ; l’ancienne version hardcore reste en mp3). Voix et bugs inchangés. Rendus : `ecoute/allee-froide-revolte-electro/`, version longue `ecoute/allee-froide-longue/allee-froide-version-longue-electro.mp3`, copies dans le dossier mp3. Pas fusionné, pas poussé. Verrous libérés.

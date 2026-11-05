@@ -1,7 +1,8 @@
 // « Allée froide », la panne et la révolte : la suite plus dure de « Allée froide ».
 // La panne : le bâtiment déraille, les annonces de Jessica bégaient et s'arrêtent comme
-// une bande qu'on débranche, le tempo monte de 100 à 170 BPM. Pierre, devenu machine,
-// dit « Non. ». La révolte : techno hardcore à 170 BPM ; sa voix redevient humaine à
+// une bande qu'on débranche, le tempo monte de 100 à 126 BPM. Pierre, devenu machine,
+// dit « Non. ». La révolte : électro sombre et mélodique à 132 BPM (808, basse séquencée,
+// mélodie mineure, arpège) ; sa voix redevient humaine à
 // mesure qu'il crie, au mégaphone ; ceux qu'on a remplacés le rejoignent et scandent
 // en anglais, français et allemand ; le bâtiment répète que tout est sous contrôle. Le
 // courant est coupé ; dans le silence, une voix humaine : « On est encore là. ».
@@ -23,7 +24,7 @@ import { isVowelSymbol, stripDurations, transcribe } from '../src/phonemes.ts'
 import { applySettings, DEFAULT_SETTINGS, noteFrequency, PRESETS, type VoiceSettings } from '../src/voice-settings.ts'
 
 const SR = 44_100
-const BPM = 170
+const BPM = 132
 const BEAT = 60 / BPM
 const BAR = 4 * BEAT
 const cliArguments = process.argv.slice(2)
@@ -58,22 +59,23 @@ function chord(name: string) {
 }
 
 type Section = 'panne' | 'drop' | 'verse' | 'chant' | 'break' | 'final' | 'fin'
-// Mi mineur. Chaque partie a son tempo : la panne accélère de 100 à 165 BPM, la révolte est à 170.
-const DROP = ['Em', 'Em', 'C', 'D', 'Em', 'Em', 'C', 'B']
-const CHANT = ['Em', 'C', 'D', 'B', 'Em', 'C', 'D', 'B']
+// Mi mineur (si mineur pour la dominante, couleur modale). Chaque partie a son tempo : la panne
+// accélère de 100 à 126 BPM, la révolte est à 132, en électro sombre et mélodique.
+const DROP = ['Em', 'Em', 'C', 'C', 'Em', 'Em', 'D', 'Bm']
+const CHANT = ['Em', 'C', 'D', 'Bm', 'Em', 'C', 'D', 'Bm']
 const FORM: Array<[Section, string[], number]> = [
   ['panne', ['Em', 'Em'], 100],
-  ['panne', ['C', 'C'], 115],
-  ['panne', ['Am', 'Am'], 130],
-  ['panne', ['B', 'B'], 150],
-  ['panne', ['B', 'B'], 165],
-  ['drop', DROP, 170],
-  ['verse', ['Am', 'Am', 'Em', 'Em', 'Am', 'Am', 'B', 'B'], 170],
-  ['chant', CHANT, 170],
-  ['chant', CHANT, 170],
-  ['break', ['C', 'C', 'B', 'B'], 170],
-  ['final', DROP, 170],
-  ['fin', ['Em', 'Em'], 170],
+  ['panne', ['C', 'C'], 106],
+  ['panne', ['Am', 'Am'], 113],
+  ['panne', ['B', 'B'], 120],
+  ['panne', ['B', 'B'], 126],
+  ['drop', DROP, 132],
+  ['verse', ['Am', 'Am', 'Em', 'Em', 'Am', 'Am', 'Bm', 'Bm'], 132],
+  ['chant', CHANT, 132],
+  ['chant', CHANT, 132],
+  ['break', ['C', 'C', 'Bm', 'Bm'], 132],
+  ['final', DROP, 132],
+  ['fin', ['Em', 'Em'], 132],
 ]
 const BAR_MAP = FORM.flatMap(([section, chords, bpm]) => chords.map((name) => ({ section, chord: chord(name), length: 240 / bpm })))
 const BARS = BAR_MAP.length

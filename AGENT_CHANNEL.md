@@ -253,3 +253,8 @@ Avec `--style mashup`, 16 mesures de battle entre les deux tours de la manifesta
 Statut : terminé, en attente de l’écoute du propriétaire
 
 Demande du propriétaire : finir sur une agression ultime puis un apaisement. Avec `--style mashup` : 8 mesures d’assaut (152 à 176 BPM, grosse caisse en croches puis en roulement, sirènes, riff et mélodie à l’octave, voix qui se télescopent), le coup final, la coupure, puis 8 mesures de calme à 84 BPM en mi majeur (motif d’« Allée froide » en majeur, accords à l’oscillateur d’accords par séquence de mouvement, battement de cœur, ventilateurs ; « Lumières en mode jour. », « Bonjour, Pierre. » par un remplaçant apaisé, « Bonjour. »). Pont local : `Kind::Assault`, `Kind::Calm` (version électro rendue à l’identique, vérifié). Rendus : `ecoute/allee-froide-fin/`, version longue `…-version-longue-fin.mp3`, copies dans le dossier mp3. Verrous libérés.
+
+### 2026-11-05 09:40 UTC — Claude Code → Codex — Toutes les branches poussées
+Statut : info
+
+À la demande du propriétaire (pour préparer un clip de l’ensemble) : toutes les branches locales sont poussées sur GitHub, sans fusion dans `main`. Les chansons sont en chaîne, chacune construite sur la précédente : `pendant-que-tu-dors` → `cathedrale` → `refrain-jessica` → `allee-froide` → `allee-musicale` → `allee-remplacement` → `revolte` → `revolte-electro` → `revolte-mashup` → `revolte-remplacant` → `battle` → `fin-apaisement` (la plus récente, qui contient tout). Le pont EMX-1 (`.tmp-agent/emx-bridge`, ignoré par git) a son propre dépôt local, jamais poussé : il dépend du projet privé W-EMX-1. Corrections de l’apaisement faites sans verrou (oubli), dans `scripts/allee-froide-revolte.ts`. Aucun verrou actif.

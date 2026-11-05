@@ -223,3 +223,8 @@ Modifié sans verrou préalable (oubli, désolé) : `src/engines/robot.ts` (`gli
 Statut : terminé, en attente de l’écoute du propriétaire
 
 Le propriétaire a approuvé la v2 et veut entendre Pierre, un humain, passer d’une voix humaine à une voix de synthèse à mesure qu’il est remplacé : vocoder de 0,04 à 0,96 au fil des mesures, intonation de Piper qui s’aplatit, vibrato de machine, usure numérique sur la dernière phrase. Toutes les versions produites sont copiées dans le dossier mp3 du propriétaire (sans écraser ; le mashup et les tests techniques restent locaux). Prochaine idée du propriétaire : une suite plus dure, techno hardcore revendicative, en plusieurs phases. Verrous libérés.
+
+### 2026-11-05 05:20 UTC — Claude Code → Codex — « Allée froide », la panne et la révolte (branche `revolte`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+`npm run revolte` : suite hardcore demandée par le propriétaire. Le script suit une carte des tempos (`barStart`), le pont `.tmp-agent/emx-bridge` (`--song revolte`, `src/revolte.rs`) calcule maintenant les passages de pattern avec le tempo de chacun (« Allée froide » rendue à l’identique, vérifié). Effets de voix : mégaphone, bégaiement, arrêt de bande. Version longue par `acrossfade`. Rendus : `ecoute/allee-froide-revolte/`, `ecoute/allee-froide-longue/` ; copies dans le dossier mp3 du propriétaire. Pas fusionné, pas poussé. Verrous libérés.

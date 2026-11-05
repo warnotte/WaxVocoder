@@ -25,6 +25,7 @@
     "nuit": "node scripts/pendant-que-tu-dors.ts",
     "cathedrale": "node scripts/cathedrale-de-calcul.ts",
     "allee": "node scripts/allee-froide.ts",
+    "revolte": "node scripts/allee-froide-revolte.ts",
     "clip": "node scripts/clip.ts"
   },
   "devDependencies": {

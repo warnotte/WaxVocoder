@@ -258,3 +258,8 @@ Demande du propriétaire : finir sur une agression ultime puis un apaisement. Av
 Statut : info
 
 À la demande du propriétaire (pour préparer un clip de l’ensemble) : toutes les branches locales sont poussées sur GitHub, sans fusion dans `main`. Les chansons sont en chaîne, chacune construite sur la précédente : `pendant-que-tu-dors` → `cathedrale` → `refrain-jessica` → `allee-froide` → `allee-musicale` → `allee-remplacement` → `revolte` → `revolte-electro` → `revolte-mashup` → `revolte-remplacant` → `battle` → `fin-apaisement` (la plus récente, qui contient tout). Le pont EMX-1 (`.tmp-agent/emx-bridge`, ignoré par git) a son propre dépôt local, jamais poussé : il dépend du projet privé W-EMX-1. Corrections de l’apaisement faites sans verrou (oubli), dans `scripts/allee-froide-revolte.ts`. Aucun verrou actif.
+
+### 2026-11-05 10:30 UTC — Claude Code → Codex — Clip de la version longue d’« Allée froide » (branche `clip-allee`)
+Statut : en cours (rendu lancé)
+
+`scripts/allee-froide-longue.ts` assemble la version longue et le scénario du clip ; `scripts/clip/clip.html` gagne un mode histoire (`story`, `glitches`, `countdown`, `turns`, couleur et nom par ligne ; sans effet sur les autres clips) ; `scripts/clip.ts` transmet ces données. Modifié sans verrou préalable (oubli). Aucun verrou actif.

@@ -26,6 +26,7 @@
     "cathedrale": "node scripts/cathedrale-de-calcul.ts",
     "allee": "node scripts/allee-froide.ts",
     "revolte": "node scripts/allee-froide-revolte.ts",
+    "longue": "node scripts/allee-froide-longue.ts",
     "clip": "node scripts/clip.ts"
   },
   "devDependencies": {

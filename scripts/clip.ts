@@ -48,11 +48,16 @@ type Timeline = {
   nave?: boolean
   /** Seconds a line stays displayed after it is sung (0.9 by default). */
   hold?: number
+  /** Story mode (a long song told in scenes): scenes, voice bugs, countdown, battle turns. */
+  story?: Array<{ type: string; start: number; end: number }>
+  glitches?: Array<{ start: number; end: number }>
+  countdown?: Array<{ at: number; value: number }>
+  turns?: Array<{ start: number; end: number; side: string }>
   cast?: Record<string, { label: string; color: [number, number, number]; side: 'left' | 'right' | 'center' }>
   bpm: number
   duration: number
   sections: { section: string; start: number; end: number }[]
-  lines: { start: number; end: number; section: string; voice?: string; segments: [string, string][] }[]
+  lines: { start: number; end: number; section: string; voice?: string; segments: [string, string][]; color?: number[]; label?: string }[]
 }
 
 // ----- Arguments -----
@@ -322,10 +327,13 @@ const lines = timeline.lines.map((line) => ({
   text: line.segments.map(([, text]) => text).join(' '),
   parts: line.segments,
   langs: line.segments.map(([lang]) => lang),
+  color: line.color,
+  label: line.label,
 }))
 const pageData = JSON.stringify({
   fps: FPS, bpm: timeline.bpm, duration, title, subtitle, credits, mainLanguage,
-  cast: timeline.cast, sectionNames: timeline.sectionNames, ending: timeline.ending, bips: timeline.bips, log: timeline.log, nave: timeline.nave, hold: timeline.hold, sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
+  cast: timeline.cast, sectionNames: timeline.sectionNames, ending: timeline.ending, bips: timeline.bips, log: timeline.log, nave: timeline.nave, hold: timeline.hold,
+  story: timeline.story, glitches: timeline.glitches, countdown: timeline.countdown, turns: timeline.turns, sections: timeline.sections, lines, frames: meter.bands, peaks: meter.peaks, music, kick: beat.kick, energy: beat.energy,
 })
 
 const output = resolve(outputPath)

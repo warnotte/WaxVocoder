@@ -95,7 +95,21 @@ const TOY_VOICE: VoiceSettings = { ...PRESETS.speakSpell.settings, intonation: 0
 const robot = (note: string): VoiceSettings => ({ ...ROBOT_VOICE, frequency: hz(note) })
 
 /** A verse sung by a Piper voice through the vocoder: one note of `melody` per syllable. */
-type PiperPart = { voice: string; melody: string; mix: number }
+type PiperPart = {
+  voice: string
+  melody: string
+  mix: number
+  /** Carrier chord of the vocoder (see the engine's CHORDS): 5 adds an octave below. */
+  chord?: number
+  /** Seconds the sung note slides from one syllable to the next. */
+  glide?: number
+  /** Vibrato (semitones) arriving on the held part of each note. */
+  vibrato?: number
+  /** Times Piper's own intonation and rhythm variation: above 1 more expressive. */
+  expression?: number
+  /** Longest stretch of the line to fill its two bars (slower is more sung). */
+  stretch?: number
+}
 
 /**
  * `segments` : une ou plusieurs langues dans la même ligne. `legato` : sans pause de ponctuation.
@@ -129,29 +143,37 @@ const JESSICA = 'fr_FR-upmc-medium:jessica'
 const JOE = 'en_US-joe-medium'
 const THORSTEN = 'de_DE-thorsten-medium'
 /** La voix du bâtiment : Jessica, sur une seule note, calme, comme une annonce en gare. */
-const announce = (bar: number, language: Language, text: string, voice = JESSICA): Line => ({ ...said(bar, language, text, voice, 'E3 E3 E3 E3 E3 E3'), pan: -0.1 })
+const announce = (bar: number, language: Language, text: string, voice = JESSICA): Line => {
+  const line = said(bar, language, text, voice, 'E3 E3 E3 E3 E3 E3')
+  return { ...line, pan: -0.1, piper: { ...line.piper!, expression: 1.15 } }
+}
+/** Pierre sings rather than says: more vocoder on the notes, notes that slide, a vibrato, a freer voice, slower. */
+const sings = (bar: number, text: string, melody: string, low = false): Line => {
+  const line = sung(bar, 'fr', text, PIERRE, melody)
+  return { ...line, pan: 0.1, piper: { ...line.piper!, mix: 0.62, glide: 0.08, vibrato: 0.3, expression: 1.3, stretch: 1.42, chord: low ? 5 : 0 } }
+}
 /** Le refrain, chanté par Pierre, doublé comme en studio (paroles et mélodie originales). */
 const chorus = (start: number): Line[] => [
-  { ...sung(start, 'fr', 'Allée froide, lumière bleue,', PIERRE, 'G3 G3 E4 D4 C4 B3 A3'), double: true, pan: 0.1 },
-  { ...sung(start + 2, 'fr', 'je suis le dernier à veiller.', PIERRE, 'B3 B3 B3 A3 G3 G3 E3 E3'), double: true, pan: 0.1 },
-  { ...sung(start + 4, 'fr', 'Allée froide, rien ne bouge,', PIERRE, 'G3 G3 E4 D4 C4 B3 A3'), double: true, pan: 0.1 },
-  { ...sung(start + 6, 'fr', 'le monde tourne sans moi.', PIERRE, 'A3 A3 B3 F#3 D#3 E3'), double: true, pan: 0.1 },
+  { ...sings(start, 'Allée froide, lumière bleue,', 'G3 G3 E4 D4 C4 B3 A3', true), double: true },
+  { ...sings(start + 2, 'je suis le dernier à veiller.', 'B3 B3 B3 A3 G3 G3 E3 E3', true), double: true },
+  { ...sings(start + 4, 'Allée froide, rien ne bouge,', 'G3 G3 E4 D4 C4 B3 A3', true), double: true },
+  { ...sings(start + 6, 'le monde tourne sans moi.', 'A3 A3 B3 F#3 D#3 E3', true), double: true },
 ]
 
 const LYRICS: Line[] = [
   announce(2, 'fr', 'Allée froide, rangée douze. Il est quatre heures.'),
   // Couplet 1 : il marche entre les machines.
-  { ...sung(8, 'fr', 'Je marche seul entre les baies qui clignotent,', PIERRE, 'E3 E3 G3 B3 B3 A3 G3 F#3'), pan: 0.1 },
-  { ...sung(10, 'fr', 'mes pas résonnent sur le sol perforé,', PIERRE, 'G3 G3 E3 G3 C4 B3 A3 G3'), pan: 0.1 },
-  { ...sung(12, 'fr', 'personne ne m’attend au bout du couloir,', PIERRE, 'A3 A3 C4 B3 A3 G3 F#3 E3'), pan: 0.1 },
-  { ...sung(14, 'fr', 'les machines savent déjà ce que j’allais faire.', PIERRE, 'F#3 F#3 A3 B3 A3 G3 F#3 D#3'), pan: 0.1 },
+  sings(8, 'Je marche seul entre les baies qui clignotent,', 'E3 E3 G3 B3 B3 A3 G3 F#3'),
+  sings(10, 'mes pas résonnent sur le sol perforé,', 'G3 G3 E3 G3 C4 B3 A3 G3'),
+  sings(12, 'personne ne m’attend au bout du couloir,', 'A3 A3 C4 B3 A3 G3 F#3 E3'),
+  sings(14, 'les machines savent déjà ce que j’allais faire.', 'F#3 F#3 A3 B3 A3 G3 F#3 D#3'),
   announce(16, 'fr', 'Température stable. Aucune intervention requise.'),
   ...chorus(20),
   // Couplet 2 : vingt ans de nuits, et un message automatique.
-  { ...sung(28, 'fr', 'J’ai changé des disques pendant vingt ans,', PIERRE, 'E3 E3 G3 B3 B3 A3 G3 F#3'), pan: 0.1 },
-  { ...sung(30, 'fr', 'je connaissais chaque bruit, chaque ventilateur,', PIERRE, 'G3 G3 E3 G3 C4 B3 A3 G3'), pan: 0.1 },
-  { ...sung(32, 'fr', 'ce soir mon badge n’ouvrira plus la porte,', PIERRE, 'A3 A3 C4 B3 A3 G3 F#3 E3'), pan: 0.1 },
-  { ...sung(34, 'fr', 'on m’a remercié par un message automatique.', PIERRE, 'F#3 F#3 A3 B3 A3 G3 F#3 D#3'), pan: 0.1 },
+  sings(28, 'J’ai changé des disques pendant vingt ans,', 'E3 E3 G3 B3 B3 A3 G3 F#3'),
+  sings(30, 'je connaissais chaque bruit, chaque ventilateur,', 'G3 G3 E3 G3 C4 B3 A3 G3'),
+  sings(32, 'ce soir mon badge n’ouvrira plus la porte,', 'A3 A3 C4 B3 A3 G3 F#3 E3'),
+  sings(34, 'on m’a remercié par un message automatique.', 'F#3 F#3 A3 B3 A3 G3 F#3 D#3'),
   announce(36, 'fr', 'Badge désactivé. Merci pour votre travail.'),
   ...chorus(40),
   // Pont : l'annonce dans trois langues, le français au milieu ; puis la voix du bâtiment raconte.
@@ -161,7 +183,7 @@ const LYRICS: Line[] = [
   announce(54, 'fr', 'Il pose la main sur une machine tiède.'),
   ...chorus(56),
   // Fin : il dit bonsoir aux machines, le bâtiment passe en mode nuit.
-  { ...sung(64, 'fr', 'Bonne nuit, les machines.', PIERRE, 'B3 A3 G3 F#3 E3 E3'), pan: 0.1 },
+  sings(64, 'Bonne nuit, les machines.', 'B3 A3 G3 F#3 E3 E3'),
   announce(66, 'fr', 'Lumières en mode nuit.'),
 ]
 
@@ -443,11 +465,13 @@ async function sing(): Promise<{ effects: Track; clear: Track }> {
       const ipa = piperPhonemes(worker, piper.config.espeak.voice, text)
       // Fit the line to its two bars: say it again faster or slower if needed.
       const room = 2 * BAR * 0.9
-      let samples = await piper.speak(ipa, { speaker: info.speaker })
+      const part = line.piper
+      const expression = { noiseScale: part.expression ?? 1, noiseW: 1 + ((part.expression ?? 1) - 1) / 2 }
+      let samples = await piper.speak(ipa, { speaker: info.speaker, ...expression })
       const ratio = room / (samples.length / piper.sampleRate)
-      if (ratio < 0.97 || ratio > 1.15) samples = await piper.speak(ipa, { speaker: info.speaker, lengthScale: Math.min(1.3, Math.max(0.72, ratio)) })
+      if (ratio < 0.97 || ratio > 1.15) samples = await piper.speak(ipa, { speaker: info.speaker, ...expression, lengthScale: Math.min(part.stretch ?? 1.3, Math.max(0.72, ratio)) })
       const melody = line.piper.melody.split(' ').map((note) => hz(note))
-      const robotic = robotize({ samples, sampleRate: piper.sampleRate }, { mix: line.piper.mix, frequency: melody[0], chord: 0, melody })
+      const robotic = robotize({ samples, sampleRate: piper.sampleRate }, { mix: part.mix, frequency: melody[0], chord: part.chord ?? 0, melody, glide: part.glide, carrierVibrato: part.vibrato })
       let take = resample(robotic, piper.sampleRate, SR)
       // Leading silence out: the line starts on the bar.
       const threshold = 0.02 * take.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)

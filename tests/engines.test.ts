@@ -92,6 +92,17 @@ describe('engines and robot stage', () => {
     })
   })
 
+  it('sing a melody with a glide and a vibrato on the carrier', () => {
+    const speech = { samples: Float32Array.from({ length: 22_050 }, (_, index) => 0.3 * Math.sin(index / 7) * (index % 5000 < 3500 ? 1 : 0.01)), sampleRate: 22_050 }
+    const melody = [220, 247, 262]
+    const stepped = robotize(speech, { mix: 0.8, frequency: 220, chord: 0, melody })
+    const sung = robotize(speech, { mix: 0.8, frequency: 220, chord: 0, melody, glide: 0.08, carrierVibrato: 0.4 })
+    assert.equal(sung.length, stepped.length)
+    assert.ok(sung.every(Number.isFinite))
+    assert.ok(sung.some((sample, index) => Math.abs(sample - stepped[index]) > 1e-3), 'the glide and the vibrato change the sound')
+    assert.deepEqual(robotize(speech, { mix: 0.8, frequency: 220, chord: 0, melody, glide: 0, carrierVibrato: 0 }), stepped, 'off by default')
+  })
+
   it('follow the voice’s own pitch for the pop correction', () => {
     const rate = 22_050
     const voiced = Float32Array.from({ length: rate }, (_, index) => {

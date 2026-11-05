@@ -20,6 +20,10 @@ export type PiperOptions = {
   lengthScale?: number
   /** Speaker of a multi-speaker voice. */
   speaker?: number
+  /** Times the voice's own intonation variation (noise_scale): above 1 more expressive. */
+  noiseScale?: number
+  /** Times the voice's own duration variation (noise_w): above 1 a freer rhythm. */
+  noiseW?: number
 }
 
 /** Language switches eSpeak NG inserts around loanwords, e.g. `(en)fʌn(fr)`. */
@@ -100,7 +104,7 @@ export class PiperVoice {
     const feeds: Record<string, import('onnxruntime-web').Tensor> = {
       input: new Tensor('int64', BigInt64Array.from(ids, BigInt), [1, ids.length]),
       input_lengths: new Tensor('int64', BigInt64Array.of(BigInt(ids.length)), [1]),
-      scales: new Tensor('float32', Float32Array.of(noise_scale, length_scale * (options.lengthScale ?? 1), noise_w), [3]),
+      scales: new Tensor('float32', Float32Array.of(noise_scale * (options.noiseScale ?? 1), length_scale * (options.lengthScale ?? 1), noise_w * (options.noiseW ?? 1)), [3]),
     }
     if (this.config.num_speakers > 1) feeds.sid = new Tensor('int64', BigInt64Array.of(BigInt(options.speaker ?? 0)), [1])
     const results = await this.session.run(feeds)

@@ -26,6 +26,10 @@ export type RobotSettings = {
   size?: number
   /** Vibrato depth in semitones. */
   vibrato?: number
+  /** With a melody: seconds the carrier takes to slide from one syllable's note to the next. */
+  glide?: number
+  /** With a melody: depth in semitones of a vibrato on the carrier, arriving after a quarter of a second of each note. */
+  carrierVibrato?: number
   /**
    * The carrier follows the voice's own pitch, snapped to the nearest
    * semitone: the « corrected » pop voice, for voices whose pitch WaxVocoder
@@ -200,12 +204,32 @@ function vocode(samples: Float32Array, sampleRate: number, settings: RobotSettin
     }
   } else {
     const starts = melody.length > 0 ? [0, ...syllableBoundaries(samples, sampleRate)] : [0]
+    const glide = melody.length > 0 ? Math.max(0, settings.glide ?? 0) : 0
+    const wobble = melody.length > 0 ? Math.max(0, settings.carrierVibrato ?? 0) : 0
     starts.forEach((start, syllable) => {
       const end = starts[syllable + 1] ?? input.length
-      vocoder.set_frequency(melody.length > 0 ? melody[syllable % melody.length] : settings.frequency)
-      const chunk = new Float32Array(end - start)
-      vocoder.process(input.subarray(start, end), chunk)
-      output.set(chunk, start)
+      const note = melody.length > 0 ? melody[syllable % melody.length] : settings.frequency
+      if (glide === 0 && wobble === 0) {
+        vocoder.set_frequency(note)
+        const chunk = new Float32Array(end - start)
+        vocoder.process(input.subarray(start, end), chunk)
+        output.set(chunk, start)
+        return
+      }
+      // Sung rather than stepped: the carrier slides from the previous note, then a vibrato
+      // comes in on the held part of the note.
+      const previous = syllable > 0 ? melody[(syllable - 1) % melody.length] : note
+      const block = Math.round(0.005 * sampleRate)
+      for (let at = start; at < end; at += block) {
+        const stop = Math.min(at + block, end)
+        const time = (at - start) / sampleRate
+        const slide = glide > 0 ? Math.min(1, time / glide) : 1
+        const depth = wobble * Math.min(1, Math.max(0, (time - 0.25) / 0.25))
+        vocoder.set_frequency(previous * (note / previous) ** slide * 2 ** (depth * Math.sin(2 * Math.PI * 5.5 * time) / 12))
+        const chunk = new Float32Array(stop - at)
+        vocoder.process(input.subarray(at, stop), chunk)
+        output.set(chunk, at)
+      }
     })
   }
   vocoder.free()

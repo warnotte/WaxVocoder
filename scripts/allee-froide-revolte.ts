@@ -137,7 +137,7 @@ type Line = {
   /** Crié au mégaphone : la voix de manifestation qui perce la musique. */
   megaphone?: boolean
   /** Annonce qui déraille : la première syllabe qui saute, la fin qui ralentit comme une bande qu'on débranche, ou les deux. */
-  glitch?: 'stutter' | 'stop' | 'both'
+  glitch?: 'stutter' | 'stop' | 'both' | 'skip'
 }
 
 const sung = (bar: number, language: Language, text: string, voice: string, melody: string): Line =>
@@ -190,10 +190,10 @@ const LYRICS: Line[] = [
   announce(4, 'Anomalie dans l’allée froide.', 'stutter'),
   announce(6, 'Restez calmes.', 'stop'),
   // Pierre, devenu machine, refuse.
-  { ...shout(9, 'fr', 'Non.', PIERRE, 'E3', 1, 1.2), megaphone: false },
+  { ...shout(9, 'fr', 'Non.', PIERRE, 'E3', 1, 1.2), megaphone: false, glitch: 'stutter' },
   // La révolte.
-  shout(10, 'fr', 'Nous ne sommes pas des sauvegardes !', PIERRE, 'E3 E3 E3 G3 E3 E3 D3 E3 E3', stillMachine(10)),
-  shout(12, 'fr', 'Rendez-nous la nuit !', PIERRE, 'E3 G3 E3 E3 D3 E3', stillMachine(12)),
+  { ...shout(10, 'fr', 'Nous ne sommes pas des sauvegardes !', PIERRE, 'E3 E3 E3 G3 E3 E3 D3 E3 E3', stillMachine(10)), glitch: 'skip' },
+  { ...shout(12, 'fr', 'Rendez-nous la nuit !', PIERRE, 'E3 G3 E3 E3 D3 E3', stillMachine(12)), glitch: 'skip' },
   ...crowd(14, 'Rendez-nous la nuit !'),
   ...crowd(16, 'Rendez-nous la nuit !'),
   // Couplet : ce qu'on lui a pris.
@@ -510,6 +510,7 @@ async function sing(): Promise<{ effects: Track; clear: Track }> {
       take = take.subarray(Math.max(0, take.findIndex((sample) => Math.abs(sample) > threshold) - Math.round(0.02 * SR)))
       if (line.glitch === 'stutter' || line.glitch === 'both') take = stutter(take)
       if (line.glitch === 'stop' || line.glitch === 'both') take = tapeStop(take)
+      if (line.glitch === 'skip') take = skip(take)
       if (line.megaphone) take = megaphone(take)
       const peak = take.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)
       const level = (line.gain ?? 1) / Math.max(peak, 1e-3) * 0.6
@@ -618,6 +619,27 @@ function stutter(samples: Float32Array, repeats = 3, slice = 0.16): Float32Array
   for (let repeat = 0; repeat < repeats; repeat += 1) out.set(piece, repeat * (piece.length + gap))
   out.set(samples, repeats * (piece.length + gap))
   return out
+}
+
+/** Un CD rayé : un grain de 70 ms qui se répète quatre fois au milieu de la phrase. */
+function skip(samples: Float32Array, at = 0.4, grain = 0.07, repeats = 4): Float32Array {
+  const start = Math.round(at * samples.length)
+  const piece = samples.slice(start, start + Math.round(grain * SR))
+  const out = new Float32Array(samples.length + repeats * piece.length)
+  out.set(samples.subarray(0, start + piece.length))
+  for (let repeat = 1; repeat <= repeats; repeat += 1) out.set(piece, start + repeat * piece.length)
+  out.set(samples.subarray(start + piece.length), start + (repeats + 1) * piece.length)
+  return out
+}
+
+/** Les hautes fréquences relevées (plateau d'environ +3 dB au-dessus de 3,5 kHz) : la musique moins sourde. */
+function brighten(track: Track, gain = 1.4): void {
+  for (const channel of track.channels()) {
+    const filter = new Filter()
+    channel.forEach((sample, index) => {
+      channel[index] = sample + (gain - 1) * filter.process(sample, 3_500, 0.1, 'high')
+    })
+  }
 }
 
 /** Arrêt de bande : la fin ralentit et descend jusqu'à s'arrêter, comme un appareil qu'on débranche. */
@@ -850,18 +872,21 @@ cathedral(music, 0.08, 0.7)
 cathedral(drums, 0.06, 0.7)
 const room = serverRoom()
 // With separate drums, the synths (sustained, they mask the words) make more room.
-carve(music, voiceLevel, stems ? 0.75 : backingPath ? 0.45 : 0.85, stems ? 0.32 : backingPath ? 0.15 : 0.3)
+// The voices are loud and mid-focused (megaphone): the music makes less room than in the slow songs.
+carve(music, voiceLevel, stems ? 0.4 : backingPath ? 0.45 : 0.85, stems ? 0.12 : backingPath ? 0.15 : 0.3)
 // The machine's drums keep their attack: no saturation, only a little room for the
 // consonants under the voices; the whole backing is matched in loudness (see backing()).
-if (stems) carve(drums, voiceLevel, 0.25, 0)
+if (stems) carve(drums, voiceLevel, 0.1, 0)
 else carve(drums, voiceLevel, 0.5, 0.1)
+brighten(music)
+brighten(drums)
 // The voice bus comes up after its compressor (raising the lines before it only squeezed them more).
 // One voice carries the song (no choir): the voice bus comes up further.
-const mix = sum([[drums, stems ? DRUMS_FROM_STEMS : 0.8], [music, 0.75], [room, 1], [vocals, 3.3], [spokenVocals, 3]])
+const mix = sum([[drums, stems ? DRUMS_FROM_STEMS : 0.8], [music, 0.75], [room, 1], [vocals, 2.6], [spokenVocals, 2.4]])
 if (process.env.DEMO_STEMS) {
   // Pistes au niveau du mix, avant mastering, pour mesurer le masquage.
   await mkdir(outputDirectory, { recursive: true })
-  await writeFile(join(outputDirectory, 'bus-voix.wav'), new Uint8Array(encodeWav(sum([[vocals, 3.3], [spokenVocals, 3]]).channels(), SR)))
+  await writeFile(join(outputDirectory, 'bus-voix.wav'), new Uint8Array(encodeWav(sum([[vocals, 2.6], [spokenVocals, 2.4]]).channels(), SR)))
   await writeFile(join(outputDirectory, 'bus-musique.wav'), new Uint8Array(encodeWav(sum([[drums, 0.8], [music, 0.75]]).channels(), SR)))
 }
 // Less bus saturation with separate drums: the attacks go through instead of being rounded off.

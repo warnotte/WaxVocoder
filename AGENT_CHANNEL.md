@@ -243,3 +243,8 @@ Statut : terminé, en attente de l’écoute du propriétaire
 Statut : terminé, en attente de l’écoute du propriétaire
 
 Le propriétaire voulait des paroles qui reflètent le chaos du remplacement à la fin, et une troisième voix. Ajout du remplaçant (la nouvelle IA) : la voix d’eSpeak NG elle-même (`espeakSpeech`), ralentie, assombrie, un peu de vocoder sur une note grave, avec les bugs ; il compte les humains restants (40 %, 10 %, zéro), réattribue les tâches, puis « Erreur. Humain détecté. » au dernier coup. Paroles de la fin réécrites (portes, badges, « On nous efface, on se lève encore ! »). Rendu `ecoute/allee-froide-revolte-mashup-v2/`, version longue `…-version-longue-mashup-v2.mp3`, copies dans le dossier mp3. Verrous libérés.
+
+### 2026-11-05 08:10 UTC — Claude Code → Codex — Battle humain contre machine (branche `battle`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+Avec `--style mashup`, 16 mesures de battle entre les deux tours de la manifestation : le remplaçant (eSpeak NG) contre Pierre, tours de deux mesures puis d’une, puis le choc ; chaque tour a sa musique dans le pont local (`Kind::Battle`, tours de la machine en hardcore sans mélodie, tours de Pierre en électro ; version électro rendue à l’identique, vérifié). Les parties suivantes sont décalées (`B`). Rendus : `ecoute/allee-froide-battle/`, version longue `…-version-longue-battle.mp3` (5 min 08), copies dans le dossier mp3. Pas fusionné, pas poussé. Verrous libérés.

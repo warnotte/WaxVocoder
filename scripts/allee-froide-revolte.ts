@@ -65,7 +65,7 @@ function chord(name: string) {
   return { bass: note(0, 1), tones: [note(0, 3), note(minor ? 3 : 4, 3), note(7, 3)] }
 }
 
-type Section = 'panne' | 'drop' | 'verse' | 'chant' | 'break' | 'final' | 'fin'
+type Section = 'panne' | 'drop' | 'verse' | 'chant' | 'battle' | 'break' | 'final' | 'fin'
 // Mi mineur (si mineur pour la dominante, couleur modale). Chaque partie a son tempo : la panne
 // accélère de 100 à 126 BPM, la révolte est à 132, en électro sombre et mélodique ; avec
 // `--style mashup`, la fin bascule vers le hardcore (pause qui accélère, dernier refrain à 148).
@@ -80,6 +80,15 @@ const FORM: Array<[Section, string[], number]> = [
   ['drop', DROP, 132],
   ['verse', ['Am', 'Am', 'Em', 'Em', 'Am', 'Am', 'Bm', 'Bm'], 132],
   ['chant', CHANT, 132],
+  // The battle, human versus machine (mashup only, same patterns as the EMX-1's): turns of two
+  // bars, then of one, then the clash.
+  ...(style === 'mashup'
+    ? [
+      ['battle', ['Em', 'Em'], 132], ['battle', ['C', 'C'], 132], ['battle', ['Am', 'Am'], 132], ['battle', ['Bm', 'Bm'], 132],
+      ['battle', ['Em'], 132], ['battle', ['C'], 132], ['battle', ['Em'], 132], ['battle', ['C'], 132], ['battle', ['Am'], 132], ['battle', ['Bm'], 132],
+      ['battle', ['B', 'B'], 132],
+    ] as Array<[Section, string[], number]>
+    : []),
   ['chant', CHANT, 132],
   // The mashup (same tempos as the EMX-1's `--song revolte-mashup`): the break speeds up bar
   // after bar, the hardcore final runs at 148 BPM.
@@ -176,7 +185,7 @@ const announce = (bar: number, text: string, glitch?: Line['glitch']): Line => {
  * How much Pierre is still a machine, by bar: synthetic when the failure ends (he says « Non. »),
  * human again by the end of the revolt.
  */
-const stillMachine = (bar: number) => Math.min(1, Math.max(0, 1 - (bar - 9) / (52 - 9)))
+const stillMachine = (bar: number) => Math.min(1, Math.max(0, 1 - (bar - 9) / (BARS - 4 - 9)))
 /** Shouted through a megaphone, fast, with Piper's freest intonation; the vocoder fades as he wakes up. */
 const shout = (bar: number, language: Language, text: string, voice: string, melody: string, machine: number, gain = 1.1): Line => {
   const line = sung(bar, language, text, voice, melody)
@@ -205,6 +214,12 @@ const crowd = (bar: number, text: string): Line[] => {
   ]
 }
 
+/** Bars added by the battle (mashup only): everything after the first chant comes later. */
+const B = style === 'mashup' ? 16 : 0
+/** Pierre answers the machine face to face: no megaphone, a warm and human voice. */
+const answer = (bar: number, text: string): Line =>
+  ({ ...shout(bar, 'fr', text, PIERRE, 'E3 E3 G3 E3 E3 D3 E3 E3 G3 E3 E3', stillMachine(bar) * 0.5), megaphone: false })
+
 const LYRICS: Line[] = [
   // La panne : le bâtiment déraille, le tempo monte.
   announce(0, 'Lumières en mode nuit.', 'stutter'),
@@ -228,23 +243,40 @@ const LYRICS: Line[] = [
   ...crowd(28, 'Rendez-nous la nuit !'),
   shout(30, 'de', 'Gebt uns die Nacht zurück!', THORSTEN, 'E3 E3 G3 E3 E3 E3', 0.15),
   ...crowd(32, 'Nous ne sommes pas des sauvegardes !'),
+  // La battle, humain contre machine (avec le mashup) : la machine en hardcore, Pierre en électro.
+  ...(style === 'mashup' ? [
+    replacement(34, 'Je ne dors pas, je ne mange pas, je ne me trompe jamais.'),
+    answer(36, 'Tu ne rêves pas, tu ne trembles pas, tu ne sais pas aimer.'),
+    replacement(38, 'Je calcule en une seconde ce que tu fais en un an.'),
+    answer(40, 'Moi je sais pourquoi je le fais, toi tu ne sais que comment.'),
+    replacement(42, 'Tu coûtes trop cher.'),
+    answer(43, 'Tu coûtes la nuit.'),
+    replacement(44, 'Tu es lent.'),
+    answer(45, 'Je suis vivant.'),
+    replacement(46, 'Tu es remplaçable.'),
+    answer(47, 'Pas mon cœur.'),
+    // Le choc : la machine bugue, Pierre lui coupe la parole, tous se lèvent.
+    replacement(48, 'Remplaçable. Remplaçable.', 'stutter'),
+    { ...answer(48, 'Non !'), gain: 1.3 },
+    ...crowd(49, 'Debout !'),
+  ] : []),
   // Second tour : le remplaçant compte, froidement, les humains qui restent.
-  replacement(34, 'Humains restants : quarante pour cent.'),
-  ...crowd(36, 'Rendez-nous la nuit !'),
-  replacement(38, 'Humains restants : dix pour cent.', 'stutter'),
-  ...crowd(40, 'Nous ne sommes pas des sauvegardes !'),
+  replacement(34 + B, 'Humains restants : quarante pour cent.'),
+  ...crowd(36 + B, 'Rendez-nous la nuit !'),
+  replacement(38 + B, 'Humains restants : dix pour cent.', 'stutter'),
+  ...crowd(40 + B, 'Nous ne sommes pas des sauvegardes !'),
   // Le bâtiment craque, le remplaçant arrive à zéro.
-  announce(42, 'Tout est sous contrôle.', 'stutter'),
-  replacement(44, 'Humains restants : zéro.', 'skip'),
+  announce(42 + B, 'Tout est sous contrôle.', 'stutter'),
+  replacement(44 + B, 'Humains restants : zéro.', 'skip'),
   // Le chaos : les portes, les badges, le remplaçant qui réattribue, la foule qui se relève.
-  shout(46, 'fr', 'Les portes se ferment, les badges ne répondent plus !', PIERRE, 'E3 E3 G3 E3 E3 D3 E3 E3 G3 E3 E3', stillMachine(46)),
-  replacement(48, 'Vos tâches ont été réattribuées.', 'skip'),
-  ...crowd(50, 'On nous efface, on se lève encore !'),
-  ...crowd(52, 'Rendez-nous la nuit !'),
+  shout(46 + B, 'fr', 'Les portes se ferment, les badges ne répondent plus !', PIERRE, 'E3 E3 G3 E3 E3 D3 E3 E3 G3 E3 E3', stillMachine(46 + B)),
+  replacement(48 + B, 'Vos tâches ont été réattribuées.', 'skip'),
+  ...crowd(50 + B, 'On nous efface, on se lève encore !'),
+  ...crowd(52 + B, 'Rendez-nous la nuit !'),
   // Le dernier coup : la machine trouve encore des humains.
-  replacement(54, 'Erreur. Humain détecté.', 'stutter'),
+  replacement(54 + B, 'Erreur. Humain détecté.', 'stutter'),
   // Le courant est coupé. Une voix humaine, sans rien.
-  { ...said(55, 'fr', 'On est encore là.', PIERRE, 'E3 E3 E3 E3 E3'), piper: { voice: PIERRE, melody: 'E3', mix: 0, expression: 1.3, stretch: 1.2 } },
+  { ...said(55 + B, 'fr', 'On est encore là.', PIERRE, 'E3 E3 E3 E3 E3'), piper: { voice: PIERRE, melody: 'E3', mix: 0, expression: 1.3, stretch: 1.2 } },
 ]
 
 // ─── Synthèse ─────────────────────────────────────────────────────────────
@@ -951,5 +983,5 @@ BAR_MAP.forEach(({ section }, bar) => {
   if (last && last.section === section) last.end = barStart(bar + 1)
   else sections.push({ section, start: barStart(bar), end: barStart(bar + 1) })
 })
-await writeFile(join(outputDirectory, 'allee-froide-revolte.json'), JSON.stringify({ title: 'Allée froide, la révolte', subtitle: SUBTITLE, credits: CREDITS, cast: CAST, sectionNames: { panne: 'La panne', drop: 'La révolte', verse: 'Ce qu’on nous a pris', chant: 'Manifestation', break: 'Système instable', final: 'Tous ensemble', fin: 'Coupure' }, hold: 1.2, bpm: BPM, duration: TOTAL / SR, sections, lines: timeline }, null, 2))
+await writeFile(join(outputDirectory, 'allee-froide-revolte.json'), JSON.stringify({ title: 'Allée froide, la révolte', subtitle: SUBTITLE, credits: CREDITS, cast: CAST, sectionNames: { panne: 'La panne', drop: 'La révolte', verse: 'Ce qu’on nous a pris', chant: 'Manifestation', battle: 'Humain contre machine', break: 'Système instable', final: 'Tous ensemble', fin: 'Coupure' }, hold: 1.2, bpm: BPM, duration: TOTAL / SR, sections, lines: timeline }, null, 2))
 console.log(`→ ${join(outputDirectory, 'allee-froide-revolte.wav')} (${(TOTAL / SR).toFixed(1)} s, ${BPM} BPM, ${BARS} mesures)`)

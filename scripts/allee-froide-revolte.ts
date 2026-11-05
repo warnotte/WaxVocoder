@@ -5,7 +5,9 @@
 // mélodie mineure, arpège) ; sa voix redevient humaine à
 // mesure qu'il crie, au mégaphone ; ceux qu'on a remplacés le rejoignent et scandent
 // en anglais, français et allemand ; le bâtiment répète que tout est sous contrôle. Le
-// courant est coupé ; dans le silence, une voix humaine : « On est encore là. ».
+// courant est coupé ; dans le silence, une voix humaine : « On est encore là. ». Une
+// troisième voix, à la fin : le remplaçant, la nouvelle IA (la voix d'eSpeak NG), qui compte
+// les humains qui restent jusqu'à zéro, réattribue les tâches, puis trouve « Humain détecté. ».
 // Paroles, riff et arrangement entièrement originaux.
 //
 // Usage : npm run build:wasm && node scripts/allee-froide-revolte.ts [dossier-de-sortie] [--backing fichier.wav]
@@ -15,7 +17,7 @@ import { join } from 'node:path'
 import initialize, { VoiceEngine } from '../src/wasm/voice-engine/voice_engine.js'
 import { decodeWav, encodeWav } from '../src/audio/wav.ts'
 import EspeakInitializer from '@echogarden/espeak-ng-emscripten'
-import { PIPER_VOICES, resample, robotize } from '../src/engines/index.ts'
+import { espeakSpeech, PIPER_VOICES, resample, robotize } from '../src/engines/index.ts'
 import { type PiperConfig, piperPhonemes, PiperVoice } from '../src/engines/piper.ts'
 import { parseDictionary } from '../src/dictionary.ts'
 import { loadEspeak } from '../src/espeak.ts'
@@ -146,6 +148,8 @@ type Line = {
   hidden?: boolean
   /** Crié au mégaphone : la voix de manifestation qui perce la musique. */
   megaphone?: boolean
+  /** La voix du remplaçant : celle d'eSpeak NG, ralentie et assombrie, une touche de vocoder sur une note grave. */
+  espeak?: { voice: string; note: string; mix: number; size: number }
   /** Annonce qui déraille : la première syllabe qui saute, la fin qui ralentit comme une bande qu'on débranche, ou les deux. */
   glitch?: 'stutter' | 'stop' | 'both' | 'skip'
 }
@@ -183,6 +187,14 @@ const shout = (bar: number, language: Language, text: string, voice: string, mel
     piper: { ...line.piper!, mix: 0.04 + 0.8 * machine, glide: 0.04, vibrato: 0, expression: 1.4, stretch: 1, lofi: 0.25 * machine ** 2 },
   }
 }
+/**
+ * The replacement, the new AI that takes Pierre's place: eSpeak NG's own voice (the old
+ * screen-reader robot), slower and darker, counting coldly the humans who are left.
+ */
+const replacement = (bar: number, text: string, glitch?: Line['glitch']): Line => ({
+  bar, segments: [['fr', text]], voice: DEFAULT_SETTINGS, gain: 1.15, pan: 0.2, glitch,
+  espeak: { voice: 'fr', note: 'E2', mix: 0.35, size: 0.86 },
+})
 /** Pierre leads, those who were replaced follow (each at its own pace: a crowd, not a choir). */
 const crowd = (bar: number, text: string): Line[] => {
   const machine = stillMachine(bar)
@@ -216,18 +228,21 @@ const LYRICS: Line[] = [
   ...crowd(28, 'Rendez-nous la nuit !'),
   shout(30, 'de', 'Gebt uns die Nacht zurück!', THORSTEN, 'E3 E3 G3 E3 E3 E3', 0.15),
   ...crowd(32, 'Nous ne sommes pas des sauvegardes !'),
-  shout(34, 'en', 'Give us back the night!', JOE, 'E3 E3 G3 E3 E3', 0.15),
+  // Second tour : le remplaçant compte, froidement, les humains qui restent.
+  replacement(34, 'Humains restants : quarante pour cent.'),
   ...crowd(36, 'Rendez-nous la nuit !'),
-  shout(38, 'de', 'Gebt uns die Nacht zurück!', THORSTEN, 'E3 E3 G3 E3 E3 E3', 0.15),
+  replacement(38, 'Humains restants : dix pour cent.', 'stutter'),
   ...crowd(40, 'Nous ne sommes pas des sauvegardes !'),
-  // Le bâtiment craque.
+  // Le bâtiment craque, le remplaçant arrive à zéro.
   announce(42, 'Tout est sous contrôle.', 'stutter'),
-  announce(44, 'Instable.', 'stop'),
-  // Tous ensemble.
-  ...crowd(46, 'Rendez-nous la nuit !'),
-  ...crowd(48, 'Nous ne sommes pas des sauvegardes !'),
-  ...crowd(50, 'Rendez-nous la nuit !'),
-  ...crowd(52, 'Nous ne sommes pas des sauvegardes !'),
+  replacement(44, 'Humains restants : zéro.', 'skip'),
+  // Le chaos : les portes, les badges, le remplaçant qui réattribue, la foule qui se relève.
+  shout(46, 'fr', 'Les portes se ferment, les badges ne répondent plus !', PIERRE, 'E3 E3 G3 E3 E3 D3 E3 E3 G3 E3 E3', stillMachine(46)),
+  replacement(48, 'Vos tâches ont été réattribuées.', 'skip'),
+  ...crowd(50, 'On nous efface, on se lève encore !'),
+  ...crowd(52, 'Rendez-nous la nuit !'),
+  // Le dernier coup : la machine trouve encore des humains.
+  replacement(54, 'Erreur. Humain détecté.', 'stutter'),
   // Le courant est coupé. Une voix humaine, sans rien.
   { ...said(55, 'fr', 'On est encore là.', PIERRE, 'E3 E3 E3 E3 E3'), piper: { voice: PIERRE, melody: 'E3', mix: 0, expression: 1.3, stretch: 1.2 } },
 ]
@@ -494,6 +509,25 @@ async function sing(): Promise<{ effects: Track; clear: Track }> {
   const clear = new Track()
   for (const line of LYRICS) {
     const vocals = line.clear ? clear : effects
+    if (line.espeak) {
+      // The replacement: eSpeak NG's own voice, slowed down and darkened, a touch of vocoder on a low note.
+      const text = line.segments.map(([, words]) => words).join(' ')
+      const speech = espeakSpeech(worker as unknown as Parameters<typeof espeakSpeech>[0], line.espeak.voice, text)
+      const robotic = robotize(speech, { mix: line.espeak.mix, frequency: hz(line.espeak.note), chord: 5, size: line.espeak.size })
+      let take = resample(robotic, speech.sampleRate, SR)
+      const threshold = 0.02 * take.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)
+      take = take.subarray(Math.max(0, take.findIndex((sample) => Math.abs(sample) > threshold) - Math.round(0.02 * SR)))
+      if (line.glitch === 'stutter' || line.glitch === 'both') take = stutter(take)
+      if (line.glitch === 'stop' || line.glitch === 'both') take = tapeStop(take)
+      if (line.glitch === 'skip') take = skip(take)
+      const peak = take.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)
+      vocals.add(take, barStart(line.bar), (line.gain ?? 1) / Math.max(peak, 1e-3) * 0.6, line.pan ?? 0)
+      const length = take.length / SR
+      const space = barStart(line.bar + 2) - barStart(line.bar)
+      timeline.push({ start: barStart(line.bar), end: barStart(line.bar) + length, section: BAR_MAP[line.bar].section, style: 'robot', voice: 'Remplaçant', segments: line.segments })
+      console.log(`mesure ${String(line.bar + 1).padStart(2)} · ${`fr:${text} (le remplaçant, eSpeak NG)`.padEnd(58)} ${length.toFixed(2)} s${length <= space ? '' : ` · DÉBORDE (${length.toFixed(2)} s pour ${space.toFixed(2)} s)`}`)
+      continue
+    }
     if (line.piper) {
       const info = PIPER_VOICES.find((voice) => voice.key === line.piper!.voice)!
       let piper = piperVoices.get(info.id)
@@ -858,6 +892,7 @@ const CAST = {
   Thorsten: { label: 'Thorsten', color: [235, 235, 240], side: 'right' },
   Tom: { label: 'La foule', color: [255, 160, 140], side: 'left' },
   Siwis: { label: 'La foule', color: [255, 160, 140], side: 'right' },
+  'Remplaçant': { label: 'Le remplaçant', color: [200, 235, 255], side: 'right' },
   'Chœur': { label: 'Le chœur des machines', color: [190, 225, 255], side: 'center' },
   Robot: { label: 'La machine', color: [230, 232, 236], side: 'center' },
 }

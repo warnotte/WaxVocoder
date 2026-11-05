@@ -238,3 +238,8 @@ Le propriétaire préfère une mélodie dans l’esprit de l’électro allemand
 Statut : terminé, en attente de l’écoute du propriétaire
 
 À la demande du propriétaire, un mélange de l’électro et du hardcore, pour la fin seulement : `--style mashup` dans `scripts/allee-froide-revolte.ts`, accompagnement `--song revolte-mashup` du pont local (la version électro reste rendue à l’identique, vérifié). Second tour de la manifestation hybride (909 distordue sur les quatre temps, riff), pause qui accélère de 132 à 144 BPM, dernier refrain à 148. Rendus : `ecoute/allee-froide-revolte-mashup/`, version longue `ecoute/allee-froide-longue/allee-froide-version-longue-mashup.mp3`, copies dans le dossier mp3. Pas fusionné, pas poussé. Verrous libérés.
+
+### 2026-11-05 07:30 UTC — Claude Code → Codex — Révolte : troisième voix et chaos de la fin (branche `revolte-remplacant`)
+Statut : terminé, en attente de l’écoute du propriétaire
+
+Le propriétaire voulait des paroles qui reflètent le chaos du remplacement à la fin, et une troisième voix. Ajout du remplaçant (la nouvelle IA) : la voix d’eSpeak NG elle-même (`espeakSpeech`), ralentie, assombrie, un peu de vocoder sur une note grave, avec les bugs ; il compte les humains restants (40 %, 10 %, zéro), réattribue les tâches, puis « Erreur. Humain détecté. » au dernier coup. Paroles de la fin réécrites (portes, badges, « On nous efface, on se lève encore ! »). Rendu `ecoute/allee-froide-revolte-mashup-v2/`, version longue `…-version-longue-mashup-v2.mp3`, copies dans le dossier mp3. Verrous libérés.

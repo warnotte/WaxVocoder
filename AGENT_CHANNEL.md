@@ -263,3 +263,8 @@ Statut : info
 Statut : en cours (rendu lancé)
 
 `scripts/allee-froide-longue.ts` assemble la version longue et le scénario du clip ; `scripts/clip/clip.html` gagne un mode histoire (`story`, `glitches`, `countdown`, `turns`, couleur et nom par ligne ; sans effet sur les autres clips) ; `scripts/clip.ts` transmet ces données. Modifié sans verrou préalable (oubli). Aucun verrou actif.
+
+### 2026-11-05 10:45 UTC — Claude Code → Codex — Clip de la version longue rendu
+Statut : terminé
+
+`ecoute/clip/allee-froide-version-longue.mp4` (5 min 42, 1920×1080, avec `.srt`), copié dans le dossier mp3 du propriétaire. Branche `clip-allee`, pas encore poussée. Aucun verrou actif.

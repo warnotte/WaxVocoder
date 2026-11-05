@@ -223,7 +223,7 @@ const B = style === 'mashup' ? 16 : 0
 const A = style === 'mashup' ? 8 : 0
 /** The replacement once the storm is over: eSpeak NG almost bare, no more darkness, no bug. */
 const calmReplacement = (bar: number, text: string): Line => ({
-  ...replacement(bar, text), gain: 0.95, espeak: { voice: 'fr', note: 'E3', mix: 0.12, size: 0.96 },
+  ...replacement(bar, text), clear: true, espeak: { voice: 'fr', note: 'E3', mix: 0.12, size: 0.96 },
 })
 /** Pierre answers the machine face to face: no megaphone, a warm and human voice. */
 const answer = (bar: number, text: string): Line =>
@@ -295,12 +295,20 @@ const LYRICS: Line[] = [
   // Le dernier coup : la machine trouve encore des humains.
   replacement(54 + B + A, 'Erreur. Humain détecté.', 'stutter'),
   // Le courant est coupé. Une voix humaine, sans rien.
-  { ...said(55 + B + A, 'fr', 'On est encore là.', PIERRE, 'E3 E3 E3 E3 E3'), piper: { voice: PIERRE, melody: 'E3', mix: 0, expression: 1.3, stretch: 1.2 } },
+  { ...said(55 + B + A, 'fr', 'On est encore là.', PIERRE, 'E3 E3 E3 E3 E3'), clear: true, piper: { voice: PIERRE, melody: 'E3', mix: 0, expression: 1.3, stretch: 1.2 } },
   // L'apaisement (avec le mashup) : la lumière revient, la machine et l'humain se saluent, sans bug.
   ...(style === 'mashup' ? [
-    { ...said(65 + B, 'fr', 'Lumières en mode jour.', JESSICA, 'E3 E3 E3 E3 E3 E3'), pan: -0.1 },
+    // Quiet and close: on their own bus, lowered after its compressor (at the level of the
+    // shouts they jumped out of the calm, and lowering them before the compressor did nothing).
+    { ...said(65 + B, 'fr', 'Lumières en mode jour.', JESSICA, 'E3 E3 E3 E3 E3 E3'), pan: -0.1, clear: true },
     calmReplacement(67 + B, 'Bonjour, Pierre.'),
-    { ...said(69 + B, 'fr', 'Bonjour.', PIERRE, 'E3'), piper: { voice: PIERRE, melody: 'E3', mix: 0, expression: 1.3, stretch: 1.2 } },
+    { ...said(69 + B, 'fr', 'Bonjour.', PIERRE, 'E3'), clear: true, piper: { voice: PIERRE, melody: 'E3', mix: 0, expression: 1.3, stretch: 1.2 } },
+    // The last line, sung softly by the human, echoing the title.
+    {
+      ...sung(70 + B, 'fr', 'Le jour se lève sur l’allée froide.', PIERRE, 'E3 G#3 B3 B3 A3 G#3 F#3 E3'),
+      pan: 0.1, clear: true,
+      piper: { voice: PIERRE, melody: 'E3 G#3 B3 B3 A3 G#3 F#3 E3', mix: 0.3, glide: 0.08, vibrato: 0.25, expression: 1.3, stretch: 1.4 },
+    },
   ] : []),
 ]
 
@@ -793,7 +801,7 @@ function serverRoom(): Track {
   const calm = calmBar >= 0 ? barStart(calmBar) : Infinity
   for (let index = 0; index < TOTAL; index += 1) {
     const time = index / SR
-    const alone = time < start ? 1 : time >= calm ? 0.7 * Math.min(1, (time - calm) / 4) : time > end ? 0 : 0.2
+    const alone = time < start ? 1 : time >= calm ? 0.25 * Math.min(1, (time - calm) / 4) : time > end ? 0 : 0.2
     const fade = Math.min(1, time / 3) * Math.min(1, (TOTAL / SR - time) / 2)
     const hum = 0.012 * Math.sin(2 * Math.PI * 100 * time) + 0.006 * Math.sin(2 * Math.PI * 200 * time)
     const left = lowLeft.process(noise(), 380, 0.2, 'low') * 0.5 + hissLeft.process(noise(), 5200, 0.1, 'band') * 0.05 + hum
@@ -986,11 +994,11 @@ brighten(music)
 brighten(drums)
 // The voice bus comes up after its compressor (raising the lines before it only squeezed them more).
 // One voice carries the song (no choir): the voice bus comes up further.
-const mix = sum([[drums, stems ? DRUMS_FROM_STEMS : 0.8], [music, 0.75], [room, 1], [vocals, 2.6], [spokenVocals, 2.4]])
+const mix = sum([[drums, stems ? DRUMS_FROM_STEMS : 0.8], [music, 0.75], [room, 1], [vocals, 2.6], [spokenVocals, 0.9]])
 if (process.env.DEMO_STEMS) {
   // Pistes au niveau du mix, avant mastering, pour mesurer le masquage.
   await mkdir(outputDirectory, { recursive: true })
-  await writeFile(join(outputDirectory, 'bus-voix.wav'), new Uint8Array(encodeWav(sum([[vocals, 2.6], [spokenVocals, 2.4]]).channels(), SR)))
+  await writeFile(join(outputDirectory, 'bus-voix.wav'), new Uint8Array(encodeWav(sum([[vocals, 2.6], [spokenVocals, 0.9]]).channels(), SR)))
   await writeFile(join(outputDirectory, 'bus-musique.wav'), new Uint8Array(encodeWav(sum([[drums, 0.8], [music, 0.75]]).channels(), SR)))
 }
 // Less bus saturation with separate drums: the attacks go through instead of being rounded off.
